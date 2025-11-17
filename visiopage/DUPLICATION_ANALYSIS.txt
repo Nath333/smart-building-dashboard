@@ -1,0 +1,169 @@
+CODE DUPLICATION ANALYSIS - VISIO PAGE GTB APPLICATION
+
+ISSUE 1: Canvas Coordinate Calculation Duplication
+====================================================
+File: src/GTBPlanApp.jsx
+Lines: 178-180, 292-294, 323-325 (3 occurrences)
+Severity: HIGH
+
+Duplicate Code Pattern:
+  const canvas = canvasRef.current;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+Solution: Extract to utils/canvasUtils.js
+Function: getCanvasCoordinates(event, canvasRef)
+Code Reduction: 9 lines
+
+---
+
+ISSUE 2: Line Style StrokeDasharray Conversion
+===============================================
+File: src/GTBPlanApp.jsx  
+Lines: 854-858, 923-927 (2 occurrences)
+Severity: HIGH
+
+Duplicate Logic:
+  strokeDasharray={
+    line.style === 'dashed' ? '10,5' :
+    line.style === 'dotted' ? '2,3' :
+    'none'
+  }
+
+Solution: Extract to utils/lineStyles.js
+Function: getStrokeDasharray(style)
+Code Reduction: 4 lines
+
+---
+
+ISSUE 3: SVG Circle Marker Components
+======================================
+File: src/GTBPlanApp.jsx
+Lines: 862-867, 869-874, 932-937, 940-945 (4 occurrences)
+Severity: HIGH
+
+Duplicate Component:
+  <circle cx={...} cy={...} r={thickness + 2} fill={color} opacity={...} />
+
+Solution: Create components/SVGLinePoint.jsx
+Component props: x, y, thickness, color, opacity
+Code Reduction: 20 lines
+
+---
+
+ISSUE 4: Message Notifications
+===============================
+File: src/GTBPlanApp.jsx
+Lines: 109, 126, 170, 206, 215, 220, 239, 252, 260, 273, 281, 283, 314, 338, 345+ (15+ locations)
+Severity: MEDIUM-HIGH
+
+Notification Calls:
+- message.success('...')
+- message.error('...')
+- message.info('...')
+- message.warning('...')
+
+Solution: Create utils/notifications.js
+Define: MESSAGES constant object, notify helper functions
+Code Reduction: 15 lines
+
+---
+
+ISSUE 5: Hardcoded Values & Magic Numbers
+==========================================
+File: src/GTBPlanApp.jsx
+Severity: HIGH
+
+Hardcoded Values Found:
+- Module default size: 120 (line 75)
+- Line color: '#1890ff' (line 84)
+- Line thickness: 3 (line 85)
+- Line style: 'solid' (line 86)
+- Slider min/max: 1-10, 60-200 (lines 547-612)
+- Arrow offset: 8, 4 (lines 879-880)
+- Delete button radius: 12 (line 893)
+- Delete button stroke: '#ff4d4f' (line 895)
+- Dash patterns: '10,5', '2,3' (lines 855, 924)
+- Gradients: Various color gradients (lines 404, 456)
+- HTML2Canvas scale: 3 (line 227)
+
+Solution: Create constants/config.js
+Organize: DEFAULTS, SLIDERS, SVG, COLORS, HTML2CANVAS_CONFIG objects
+Code Reduction: 20+ lines
+
+---
+
+ISSUE 6: Flexbox Styling Patterns
+==================================
+File: src/GTBPlanApp.jsx
+Lines: 515-522, 583-591, 675-679, 483-493, 621 (5+ occurrences)
+Severity: MEDIUM
+
+Duplicate Pattern:
+  display: 'flex'
+  alignItems: 'center'
+  gap: 16
+  padding: '12px 16px'
+  borderRadius: 6
+  boxShadow: '...'
+
+Solution: Create utils/styles.js
+Define: flexStyles, panelStyles objects
+Code Reduction: 15-20 lines
+
+---
+
+ISSUE 7: Button Styling
+=======================
+File: src/GTBPlanApp.jsx
+Lines: 380-391, 401-407, 419-423, 436-440, 452-458, 467-475 (6 occurrences)
+Severity: MEDIUM
+
+Duplicate Properties:
+  borderRadius: 6
+  fontWeight: 'bold'
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  background: (conditional gradients)
+
+Solution: Create utils/buttonStyles.js
+Define: buttonStyles.default, primary, lineMode
+Code Reduction: 15 lines
+
+---
+
+CONSOLIDATION SUMMARY
+=====================
+
+Total Issues: 7 categories
+Total Locations: 45+
+Code Reduction Potential: 15-20% (150-200 lines)
+Estimated Effort: 13-15 hours with testing
+
+Priority Breakdown:
+HIGH (Refactor First): Issues 1, 2, 3, 5 (5.5 hours)
+MEDIUM (Refactor Next): Issues 4, 6, 7 (3.5 hours)
+Testing & Verification: (5 hours)
+
+Recommended File Structure After Refactoring:
+src/
+├── components/
+│   ├── SVGLine.jsx (NEW)
+│   └── SVGLinePoint.jsx (NEW)
+├── utils/
+│   ├── canvasUtils.js (NEW)
+│   ├── lineStyles.js (NEW)
+│   ├── notifications.js (NEW)
+│   ├── buttonStyles.js (NEW)
+│   └── styles.js (NEW)
+├── constants/
+│   └── config.js (NEW)
+└── hooks/ (OPTIONAL)
+
+Expected Benefits:
+- 15-20% code reduction
+- Improved maintainability
+- Single source of truth for constants
+- Foundation for themeing system
+- Better code organization
+- Reduced bug risk
