@@ -72,6 +72,9 @@ The backend API will be running on `http://localhost:3001`
 
 ```
 smart-building-dashboard/
+├── shared/                  # Shared code between frontend & backend
+│   ├── types.ts             # TypeScript type definitions
+│   └── config.ts            # Shared configuration constants
 ├── src/                     # Frontend source code
 │   ├── components/          # React components
 │   │   ├── StatusIndicator.tsx
@@ -81,7 +84,7 @@ smart-building-dashboard/
 │   │   └── DeviceList.tsx
 │   ├── services/            # Frontend API client
 │   │   └── buildingDataService.ts
-│   ├── types/               # TypeScript type definitions
+│   ├── types/               # Re-exports from shared types
 │   │   └── index.ts
 │   ├── App.tsx              # Main application component
 │   ├── App.css              # Application styles
@@ -92,8 +95,9 @@ smart-building-dashboard/
 │   │   └── building.ts      # Building data endpoints
 │   ├── services/            # Backend business logic
 │   │   └── buildingDataService.ts
-│   ├── types/               # Shared TypeScript types
-│   │   └── index.ts
+│   ├── utils/               # Backend utilities
+│   │   ├── logger.ts        # Logging system
+│   │   └── validators.ts    # Request validation
 │   └── tsconfig.json        # Backend TypeScript config
 ├── .env                     # Environment variables (not in git)
 ├── .env.example             # Environment variables template
@@ -105,6 +109,11 @@ smart-building-dashboard/
 
 This application follows a **full-stack architecture** with a clear separation between frontend and backend:
 
+### Shared Layer
+- **Single Source of Truth**: Types and configuration defined once, used everywhere
+- **Type Safety**: Full TypeScript coverage across the entire stack
+- **No Duplication**: Eliminates inconsistencies between frontend and backend
+
 ### Frontend (React + Vite)
 - Handles UI rendering and user interactions
 - Fetches data from the backend REST API
@@ -115,6 +124,7 @@ This application follows a **full-stack architecture** with a clear separation b
 - Provides REST API endpoints for building data
 - Generates realistic mock data (ready to be replaced with real sensors/databases)
 - Handles CORS for frontend communication
+- Professional logging and request validation
 - Runs on `http://localhost:3001`
 
 ### API Endpoints

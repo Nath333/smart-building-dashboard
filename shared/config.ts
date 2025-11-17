@@ -1,6 +1,13 @@
 /**
  * Shared configuration constants
+ * Compatible with both Node.js (backend) and browser (frontend)
  */
+
+// Check if we're in a Node.js environment
+const isNode = typeof process !== 'undefined' && process.env !== undefined;
+const isProduction = isNode
+  ? process.env.NODE_ENV === 'production'
+  : false; // Frontend uses Vite's import.meta.env
 
 export const Config = {
   API: {
@@ -15,6 +22,6 @@ export const Config = {
   },
   LOGGING: {
     ENABLED: true,
-    LEVEL: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
+    LEVEL: isProduction ? 'error' : 'debug',
   },
 } as const;
