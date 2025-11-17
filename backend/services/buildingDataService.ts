@@ -208,7 +208,7 @@ export class BuildingDataService {
 
   static async getHistoricalData(startDate: Date, endDate: Date): Promise<EnergyData[]> {
     // In a real app, this would query based on date range
-    console.log(`Fetching data from ${startDate} to ${endDate}`);
+    logger.debug(`Fetching historical data from ${startDate.toISOString()} to ${endDate.toISOString()}`);
     return this.generateEnergyHistory();
   }
 }
