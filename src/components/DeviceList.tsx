@@ -8,7 +8,7 @@ interface DeviceListProps {
 export function DeviceList({ devices }: DeviceListProps) {
   return (
     <div className="device-list-card">
-      <h3>Connected Devices</h3>
+      <h3>Appareils Connectés</h3>
       <div className="device-list">
         {devices.map((device) => (
           <div key={device.id} className="device-item">
@@ -26,7 +26,7 @@ export function DeviceList({ devices }: DeviceListProps) {
               </div>
             </div>
             <div className="device-last-seen">
-              {device.isConnected ? 'Active' : 'Offline'}
+              {device.isConnected ? 'Actif' : 'Hors ligne'}
             </div>
           </div>
         ))}

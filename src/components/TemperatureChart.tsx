@@ -21,15 +21,15 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
       <div className="card-header">
         <div className="header-content">
           <Thermometer size={24} className="header-icon" />
-          <h3>Temperature Trends</h3>
+          <h3>Tendances de Température</h3>
         </div>
         <div className="temperature-display">
           <div className="temp-item">
-            <span className="temp-label">Indoor</span>
+            <span className="temp-label">Intérieur</span>
             <span className="temp-value indoor">{currentIndoor}°C</span>
           </div>
           <div className="temp-item">
-            <span className="temp-label">Outdoor</span>
+            <span className="temp-label">Extérieur</span>
             <span className="temp-value outdoor">{currentOutdoor}°C</span>
           </div>
         </div>
@@ -62,7 +62,7 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
             stroke="#ef4444"
             fill="#fecaca"
             strokeWidth={2}
-            name="Indoor (°C)"
+            name="Intérieur (°C)"
           />
           <Area
             type="monotone"
@@ -70,7 +70,7 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
             stroke="#3b82f6"
             fill="#bfdbfe"
             strokeWidth={2}
-            name="Outdoor (°C)"
+            name="Extérieur (°C)"
           />
         </AreaChart>
       </ResponsiveContainer>

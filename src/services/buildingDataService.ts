@@ -20,7 +20,7 @@ export class BuildingDataService {
 
   private static generateTemperatureHistory(): TemperatureData[] {
     const data: TemperatureData[] = [];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
     for (let i = 0; i < 7; i++) {
       data.push({
@@ -57,29 +57,29 @@ export class BuildingDataService {
       devices: [
         {
           id: '1',
-          name: 'HVAC System',
-          type: 'Climate Control',
+          name: 'Système CVC',
+          type: 'Contrôle Climatique',
           isConnected: isOnline,
           lastSeen: new Date(),
         },
         {
           id: '2',
-          name: 'Lighting System',
-          type: 'Lighting',
+          name: 'Système d\'Éclairage',
+          type: 'Éclairage',
           isConnected: isOnline,
           lastSeen: new Date(),
         },
         {
           id: '3',
-          name: 'Security System',
-          type: 'Security',
+          name: 'Système de Sécurité',
+          type: 'Sécurité',
           isConnected: isOnline,
           lastSeen: new Date(),
         },
         {
           id: '4',
-          name: 'Energy Meter',
-          type: 'Monitoring',
+          name: 'Compteur d\'Énergie',
+          type: 'Surveillance',
           isConnected: isOnline,
           lastSeen: new Date(),
         },

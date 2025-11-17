@@ -20,15 +20,28 @@ export function EnvironmentalMetrics({ data }: EnvironmentalMetricsProps) {
   };
 
   const getHumidityStatus = (humidity: number) => {
-    if (humidity < 30) return 'Low';
-    if (humidity > 60) return 'High';
+    if (humidity < 30) return 'Faible';
+    if (humidity > 60) return 'Élevé';
     return 'Optimal';
   };
 
   const getCO2Status = (co2: number) => {
     if (co2 < 600) return 'Excellent';
-    if (co2 < 800) return 'Good';
-    return 'Fair';
+    if (co2 < 800) return 'Bon';
+    return 'Moyen';
+  };
+
+  const getAirQualityLabel = (quality: string) => {
+    switch (quality) {
+      case 'good':
+        return 'Bon';
+      case 'moderate':
+        return 'Modéré';
+      case 'poor':
+        return 'Mauvais';
+      default:
+        return quality;
+    }
   };
 
   return (
@@ -38,7 +51,7 @@ export function EnvironmentalMetrics({ data }: EnvironmentalMetricsProps) {
           <Droplets size={24} color="#0284c7" />
         </div>
         <div className="metric-content">
-          <h4>Humidity</h4>
+          <h4>Humidité</h4>
           <p className="metric-value">{Math.round(data.humidity)}%</p>
           <p className="metric-status">{getHumidityStatus(data.humidity)}</p>
         </div>
@@ -49,7 +62,7 @@ export function EnvironmentalMetrics({ data }: EnvironmentalMetricsProps) {
           <Wind size={24} color="#d97706" />
         </div>
         <div className="metric-content">
-          <h4>CO₂ Level</h4>
+          <h4>Niveau de CO₂</h4>
           <p className="metric-value">{Math.round(data.co2Level)} ppm</p>
           <p className="metric-status">{getCO2Status(data.co2Level)}</p>
         </div>
@@ -60,11 +73,11 @@ export function EnvironmentalMetrics({ data }: EnvironmentalMetricsProps) {
           <Activity size={24} color={getAirQualityColor(data.airQuality)} />
         </div>
         <div className="metric-content">
-          <h4>Air Quality</h4>
+          <h4>Qualité de l'Air</h4>
           <p className="metric-value" style={{ color: getAirQualityColor(data.airQuality) }}>
-            {data.airQuality.charAt(0).toUpperCase() + data.airQuality.slice(1)}
+            {getAirQualityLabel(data.airQuality)}
           </p>
-          <p className="metric-status">Overall rating</p>
+          <p className="metric-status">Évaluation globale</p>
         </div>
       </div>
     </div>

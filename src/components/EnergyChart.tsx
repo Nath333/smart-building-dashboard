@@ -18,11 +18,11 @@ export function EnergyChart({ data, realTime }: EnergyChartProps) {
       <div className="card-header">
         <div className="header-content">
           <Zap size={24} className="header-icon" />
-          <h3>Energy Consumption</h3>
+          <h3>Consommation d'Énergie</h3>
         </div>
         <div className="realtime-display">
-          <span className="realtime-label">Current</span>
-          <span className="realtime-value">{Math.round(realTime).toLocaleString()} W</span>
+          <span className="realtime-label">Actuel</span>
+          <span className="realtime-value">{Math.round(realTime).toLocaleString('fr-FR')} W</span>
         </div>
       </div>
 
@@ -53,7 +53,7 @@ export function EnergyChart({ data, realTime }: EnergyChartProps) {
             stroke="#2563eb"
             strokeWidth={2}
             dot={false}
-            name="Energy (kWh)"
+            name="Énergie (kWh)"
           />
         </LineChart>
       </ResponsiveContainer>

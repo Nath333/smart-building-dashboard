@@ -40,7 +40,7 @@ function App() {
     return (
       <div className="loading-container">
         <RefreshCw className="loading-spinner" size={48} />
-        <p>Loading building data...</p>
+        <p>Chargement des données du bâtiment...</p>
       </div>
     );
   }
@@ -48,9 +48,9 @@ function App() {
   if (!buildingData) {
     return (
       <div className="error-container">
-        <p>Failed to load building data</p>
+        <p>Échec du chargement des données du bâtiment</p>
         <button onClick={fetchData} className="retry-button">
-          Retry
+          Réessayer
         </button>
       </div>
     );
@@ -62,18 +62,18 @@ function App() {
         <div className="header-left">
           <Building2 size={32} />
           <div>
-            <h1>Smart Building Dashboard</h1>
-            <p className="subtitle">Real-time monitoring and analytics</p>
+            <h1>Tableau de Bord du Bâtiment Intelligent</h1>
+            <p className="subtitle">Surveillance et analyse en temps réel</p>
           </div>
         </div>
         <button
           onClick={fetchData}
           className="refresh-button"
           disabled={loading}
-          title="Refresh data"
+          title="Actualiser les données"
         >
           <RefreshCw size={20} className={loading ? 'spinning' : ''} />
-          <span>Refresh</span>
+          <span>Actualiser</span>
         </button>
       </header>
 
@@ -91,7 +91,7 @@ function App() {
         </section>
 
         <section className="metrics-section">
-          <h2>Environmental Metrics</h2>
+          <h2>Métriques Environnementales</h2>
           <EnvironmentalMetrics data={buildingData.environmental} />
         </section>
 
@@ -101,7 +101,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Last updated: {lastRefresh.toLocaleTimeString()}</p>
+        <p>Dernière mise à jour : {lastRefresh.toLocaleTimeString('fr-FR')}</p>
       </footer>
     </div>
   );
