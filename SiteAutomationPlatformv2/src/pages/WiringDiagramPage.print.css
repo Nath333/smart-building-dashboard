@@ -1,0 +1,773 @@
+/* Print Styles for Wiring Diagram Page - Exact UI Match */
+
+@media print {
+  /* ========== FORCE COLOR PRINTING ========== */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* ========== HIDE ALL BUTTONS ========== */
+  button,
+  .ant-btn,
+  .ant-btn-primary,
+  .ant-btn-default,
+  .ant-btn-danger,
+  .ant-btn-lg,
+  .ant-space-item:has(button),
+  [type="button"],
+  .ant-layout-header,
+  .ant-tabs,
+  .ant-tabs-nav {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ========== PAGE SETUP ========== */
+  @page {
+    size: A4 portrait;
+    margin: 18mm 14mm;
+    padding: 0;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  #root,
+  .ant-layout,
+  .ant-layout-content {
+    background: white !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* ========== MAIN CONTAINER ========== */
+  body > div,
+  #root > div {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Main content card */
+  body > div > .ant-card {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* ========== HEADER ========== */
+  h2 {
+    text-align: center !important;
+    font-size: 22pt !important;
+    margin: 0 0 10px 0 !important;
+    padding: 10px 0 8px 0 !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    border-bottom: 2.5px solid #1890ff !important;
+    background: linear-gradient(to bottom, #f8f9fa, #fff) !important;
+    line-height: 1.4 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  h3 {
+    font-size: 14pt !important;
+    margin: 6px 0 !important;
+    font-weight: 600 !important;
+    color: #000 !important;
+    line-height: 1.5 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  /* Site name subtitle */
+  .ant-typography-secondary {
+    text-align: center !important;
+    display: block !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 10px !important;
+    font-size: 11.5pt !important;
+    color: #333 !important;
+    font-weight: 500 !important;
+    border-bottom: 1px solid #e8e8e8 !important;
+    line-height: 1.5 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  /* ========== GRADIENT CARDS ========== */
+  /* Module Configuration Selector Card - Purple Gradient */
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    margin: 10px 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] .ant-card-body {
+    padding: 15px !important;
+  }
+
+  /* Keep layout horizontal in selector card */
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] .ant-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] .ant-col {
+    width: auto !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* White text in purple gradient card */
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] * {
+    color: white !important;
+  }
+
+  /* Radio buttons in gradient card - keep horizontal */
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] .ant-radio-group {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+  }
+
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] .ant-radio-button-wrapper {
+    background: white !important;
+    color: #000 !important;
+    border: 1px solid white !important;
+    flex: 1 !important;
+  }
+
+  .ant-card[style*="background: linear-gradient(135deg, #667eea"] .ant-radio-button-wrapper-checked {
+    background: #1890ff !important;
+    color: white !important;
+  }
+
+  /* ========== MODULE CONFIGURATION MAIN CARD ========== */
+  /* Main purple gradient container */
+  .ant-card-type-inner[style*="background: linear-gradient(135deg, #667eea"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    margin: 10px 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .ant-card-type-inner[style*="background: linear-gradient(135deg, #667eea"] .ant-card-head {
+    background: rgba(255,255,255,0.95) !important;
+    border-bottom: 2px solid #1890ff !important;
+  }
+
+  .ant-card-type-inner[style*="background: linear-gradient(135deg, #667eea"] .ant-card-body {
+    padding: 20px !important;
+  }
+
+  /* Force horizontal layout for module cards row */
+  .ant-card-type-inner[style*="background: linear-gradient(135deg, #667eea"] .ant-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  /* Module cards in 3-column layout */
+  .ant-card-type-inner[style*="background: linear-gradient(135deg, #667eea"] .ant-col {
+    width: 31% !important;
+    max-width: 31% !important;
+    flex: 0 0 31% !important;
+    display: inline-block !important;
+  }
+
+  /* ========== MODULE CARDS (PS, AS-P, DO12) ========== */
+  /* Orange border for PS (Slot 1) */
+  .ant-col:nth-of-type(1) .ant-card-hoverable,
+  .ant-col:first-child .ant-card-hoverable {
+    border: 3px solid #ffa940 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(to bottom, #fff, #fffbf5) !important;
+    box-shadow: 0 3px 12px rgba(255, 169, 64, 0.2) !important;
+  }
+
+  /* Blue border for AS-P (Slot 2) */
+  .ant-col:nth-of-type(2) .ant-card-hoverable {
+    border: 3px solid #1890ff !important;
+    border-radius: 12px !important;
+    background: linear-gradient(to bottom, #fff, #f6fbff) !important;
+    box-shadow: 0 3px 12px rgba(24, 144, 255, 0.2) !important;
+  }
+
+  /* Green border for DO12 (Slot 3) */
+  .ant-col:nth-of-type(3) .ant-card-hoverable {
+    border: 3px solid #52c41a !important;
+    border-radius: 12px !important;
+    background: linear-gradient(to bottom, #fff, #f7fff5) !important;
+    box-shadow: 0 3px 12px rgba(82, 196, 26, 0.2) !important;
+  }
+
+  /* Module card body styling */
+  .ant-badge-ribbon-wrapper .ant-card-body {
+    padding: 18px !important;
+  }
+
+  /* ========== BADGE RIBBONS ========== */
+  .ant-badge-ribbon {
+    position: absolute !important;
+    font-weight: 700 !important;
+    font-size: 11pt !important;
+    padding: 4px 12px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+    line-height: 1.4 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  .ant-badge-ribbon-color-orange,
+  .ant-badge-ribbon-text:contains("Slot 1") {
+    background: linear-gradient(135deg, #fa8c16, #ff9c3a) !important;
+  }
+
+  .ant-badge-ribbon-color-blue {
+    background: linear-gradient(135deg, #1890ff, #40a9ff) !important;
+  }
+
+  .ant-badge-ribbon-color-green {
+    background: linear-gradient(135deg, #52c41a, #73d13d) !important;
+  }
+
+  /* ========== MODULE ICONS CIRCULAR BACKGROUNDS ========== */
+  /* Orange gradient circle - PS */
+  .ant-col:nth-of-type(1) div[style*="linear-gradient(135deg, #fff7e6"] {
+    width: 130px !important;
+    height: 130px !important;
+    background: linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 14px !important;
+    box-shadow: 0 4px 16px rgba(255, 169, 64, 0.25) !important;
+    border: 3px solid #fff !important;
+  }
+
+  /* Blue gradient circle - AS-P */
+  .ant-col:nth-of-type(2) div[style*="linear-gradient(135deg, #e6f7ff"] {
+    width: 130px !important;
+    height: 130px !important;
+    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 14px !important;
+    box-shadow: 0 4px 16px rgba(24, 144, 255, 0.25) !important;
+    border: 3px solid #fff !important;
+  }
+
+  /* Green gradient circle - DO12 */
+  .ant-col:nth-of-type(3) div[style*="linear-gradient(135deg, #f6ffed"] {
+    width: 130px !important;
+    height: 130px !important;
+    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 14px !important;
+    box-shadow: 0 4px 16px rgba(82, 196, 26, 0.25) !important;
+    border: 3px solid #fff !important;
+  }
+
+  /* ========== MODULE IMAGES ========== */
+  img {
+    max-width: 100px !important;
+    max-height: 100px !important;
+  }
+
+  /* Module card images - larger */
+  .ant-card-hoverable img {
+    max-width: 100px !important;
+    max-height: 100px !important;
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  /* ========== MODULE TITLES WITH COLORS ========== */
+  h3[style*="color: #fa8c16"] {
+    color: #fa8c16 !important;
+  }
+
+  h3[style*="color: #1890ff"] {
+    color: #1890ff !important;
+  }
+
+  h3[style*="color: #52c41a"] {
+    color: #52c41a !important;
+  }
+
+  /* ========== CARDS GENERAL ========== */
+  .ant-card {
+    page-break-inside: avoid !important;
+    margin-bottom: 16px !important;
+    border: 1.5px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+  }
+
+  .ant-card-head {
+    padding: 10px 14px !important;
+    font-size: 12pt !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+    background: linear-gradient(to bottom, #fafafa, #f5f5f5) !important;
+    border-bottom: 2px solid #e8e8e8 !important;
+    line-height: 1.5 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  .ant-card-head * {
+    color: #000 !important;
+    font-weight: 700 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  .ant-card-body {
+    padding: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  .ant-card-type-inner {
+    background: #fafafa !important;
+    border: 1.5px solid #e8e8e8 !important;
+    margin-bottom: 18px !important;
+  }
+
+  .ant-card-type-inner .ant-card-head {
+    background: linear-gradient(to bottom, #f5f5f5, #ececec) !important;
+    border-bottom: 2px solid #d9d9d9 !important;
+  }
+
+  .ant-card-type-inner .ant-card-body {
+    padding: 18px !important;
+  }
+
+  /* Card title icons */
+  .ant-card-head .anticon {
+    font-size: 16pt !important;
+    margin-right: 6px !important;
+    color: #000 !important;
+  }
+
+  /* Extra spacing before major sections */
+  .ant-card-type-inner:first-of-type {
+    margin-top: 8px !important;
+  }
+
+  /* ========== SERIAL CONFIG CARDS (COLORED BACKGROUNDS) ========== */
+  /* COM A - Light Blue Background */
+  .ant-card-small[style*="backgroundColor: #f0f5ff"],
+  .ant-card-small[style*="background-color: rgb(240, 245, 255)"] {
+    background: linear-gradient(to bottom, #f0f5ff, #e6f0ff) !important;
+    border: 1.5px solid #91d5ff !important;
+    box-shadow: 0 1px 3px rgba(24, 144, 255, 0.1) !important;
+  }
+
+  /* COM B - Light Green Background */
+  .ant-card-small[style*="backgroundColor: #f6ffed"],
+  .ant-card-small[style*="background-color: rgb(246, 255, 237)"] {
+    background: linear-gradient(to bottom, #f6ffed, #edf7e8) !important;
+    border: 1.5px solid #b7eb8f !important;
+    box-shadow: 0 1px 3px rgba(82, 196, 26, 0.1) !important;
+  }
+
+  /* Keep serial config cards layout horizontal */
+  .ant-card-small .ant-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 14px !important;
+  }
+
+  .ant-card-small .ant-col {
+    flex: 1 !important;
+    width: 25% !important;
+    max-width: 25% !important;
+  }
+
+  /* Serial config cards - ensure visibility */
+  .ant-card-small[style*="backgroundColor: #f0f5ff"],
+  .ant-card-small[style*="backgroundColor: #f6ffed"] {
+    page-break-inside: avoid !important;
+    margin-bottom: 12px !important;
+  }
+
+  .ant-card-small .ant-card-body {
+    padding: 10px 12px !important;
+  }
+
+
+  /* Cable spec cards - enhanced styling */
+  .ant-card-small[style*="backgroundColor: #fff7e6"],
+  .ant-card-small[style*="borderColor: #ffa940"] {
+    background: linear-gradient(to bottom, #fff7e6, #fff0d6) !important;
+    border: 2px solid #ffa940 !important;
+    box-shadow: 0 2px 6px rgba(255, 169, 64, 0.15) !important;
+  }
+
+  .ant-card-small[style*="backgroundColor: #e6f7ff"],
+  .ant-card-small[style*="borderColor: #40a9ff"] {
+    background: linear-gradient(to bottom, #e6f7ff, #d6f0ff) !important;
+    border: 2px solid #40a9ff !important;
+    box-shadow: 0 2px 6px rgba(64, 169, 255, 0.15) !important;
+  }
+
+  .ant-card-small[style*="borderColor: #52c41a"] {
+    background: linear-gradient(to bottom, #f6ffed, #ebfae3) !important;
+    border: 2px solid #52c41a !important;
+    box-shadow: 0 2px 6px rgba(82, 196, 26, 0.15) !important;
+  }
+
+  /* Cable specification cards row - keep horizontal */
+  .ant-card-type-inner .ant-row > .ant-col {
+    width: 33.33% !important;
+    max-width: 33.33% !important;
+    flex: 0 0 33.33% !important;
+  }
+
+  /* ========== TABLES ========== */
+  .ant-table {
+    font-size: 11pt !important;
+    border: 1.5px solid #d9d9d9 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  .ant-table-thead > tr > th {
+    background: linear-gradient(to bottom, #f8f8f8, #f0f0f0) !important;
+    font-weight: 700 !important;
+    padding: 10px 8px !important;
+    border: 1px solid #d9d9d9 !important;
+    font-size: 11pt !important;
+    color: #000 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    line-height: 1.5 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  .ant-table-tbody > tr > td {
+    padding: 10px 8px !important;
+    border: 1px solid #e8e8e8 !important;
+    font-size: 11pt !important;
+    color: #000 !important;
+    line-height: 1.6 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  .ant-table-tbody > tr:nth-child(even) {
+    background: #fafafa !important;
+  }
+
+  .ant-table-tbody > tr:hover {
+    background: #f5f5f5 !important;
+  }
+
+  /* Table first column (Point labels) */
+  .ant-table-tbody > tr > td:first-child {
+    font-weight: 700 !important;
+    background: #f8f8f8 !important;
+    color: #0066cc !important;
+  }
+
+  /* ========== INPUTS - SHOW VALUES ========== */
+  .ant-input,
+  .ant-select-selector,
+  .ant-input-number-input,
+  textarea {
+    border: 1px solid #d9d9d9 !important;
+    background: white !important;
+    padding: 5px 8px !important;
+    font-size: 10.5pt !important;
+    color: #000 !important;
+    line-height: 1.5 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  textarea {
+    min-height: 50px !important;
+    line-height: 1.6 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  /* Hide input arrows and icons */
+  .ant-input-prefix,
+  .ant-input-suffix,
+  .ant-select-arrow,
+  .ant-input-number-handler-wrap {
+    display: none !important;
+  }
+
+  /* ========== RADIO BUTTONS ========== */
+  .ant-radio-button-wrapper {
+    border: 1px solid #d9d9d9 !important;
+    background: white !important;
+    padding: 4px 8px !important;
+  }
+
+  .ant-radio-button-wrapper-checked {
+    background: #1890ff !important;
+    color: white !important;
+    border-color: #1890ff !important;
+  }
+
+  /* ========== TAGS ========== */
+  .ant-tag {
+    border: 1px solid currentColor !important;
+    padding: 2px 8px !important;
+  }
+
+  .ant-tag-blue {
+    background: #e6f7ff !important;
+    border-color: #1890ff !important;
+    color: #1890ff !important;
+  }
+
+  .ant-tag-green {
+    background: #f6ffed !important;
+    border-color: #52c41a !important;
+    color: #52c41a !important;
+  }
+
+  /* ========== BADGES ========== */
+  .ant-badge-status-success {
+    background: #52c41a !important;
+  }
+
+  .ant-badge-status-dot {
+    width: 6px !important;
+    height: 6px !important;
+  }
+
+  /* ========== DIVIDERS ========== */
+  .ant-divider {
+    margin: 16px 0 !important;
+    border-color: #d9d9d9 !important;
+    border-top-width: 1.5px !important;
+    opacity: 0.6 !important;
+  }
+
+  /* Extra space after major sections */
+  .ant-card-type-inner + .ant-divider {
+    margin: 20px 0 !important;
+  }
+
+  /* ========== SPACING ========== */
+  .ant-space {
+    gap: 8px !important;
+  }
+
+  .ant-space-vertical {
+    gap: 8px !important;
+  }
+
+  .ant-row {
+    page-break-inside: avoid !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 8px !important;
+  }
+
+  .ant-row[gutter] + .ant-row[gutter] {
+    margin-top: 8px !important;
+  }
+
+  /* ========== GRID LAYOUT - KEEP HORIZONTAL ========== */
+  /* Force ALL rows to stay horizontal */
+  .ant-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Force 3-column layout for module cards */
+  .ant-row[gutter] {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    gap: 12px !important;
+  }
+
+  .ant-col {
+    flex: 0 0 auto !important;
+    display: inline-block !important;
+    vertical-align: top !important;
+  }
+
+  /* Ensure 3-column cards stay side by side */
+  .ant-col.ant-col-xs-24.ant-col-md-8 {
+    width: 31% !important;
+    max-width: 31% !important;
+    flex: 0 0 31% !important;
+    display: inline-block !important;
+  }
+
+  /* Ensure 2-column cards stay side by side */
+  .ant-col.ant-col-xs-24.ant-col-md-12 {
+    width: 48% !important;
+    max-width: 48% !important;
+    flex: 0 0 48% !important;
+    display: inline-block !important;
+  }
+
+  /* Summary section - keep horizontal */
+  .ant-row.ant-row-gutter {
+    justify-content: space-around !important;
+  }
+
+  /* ========== PAGE BREAKS - ORGANIZED LAYOUT ========== */
+  /* Keep elements together */
+  .ant-badge-ribbon-wrapper,
+  .ant-table-wrapper {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ====== PAGE 1: Configuration GTB (alone) ====== */
+
+  /* First type-inner card (Configuration GTB) - stays on page 1, then forces break */
+  .ant-card-type-inner:nth-of-type(1) {
+    page-break-before: auto !important;
+    page-break-after: always !important;
+    break-after: always !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* First divider after GTB - hide it */
+  .ant-divider:nth-of-type(1) {
+    display: none !important;
+  }
+
+  /* ====== PAGE 2: Connexions & Câblage (COM A + COM B together) ====== */
+
+  /* Second type-inner card (COM A) - starts page 2 */
+  .ant-card-type-inner:nth-of-type(2) {
+    page-break-before: auto !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Third type-inner card (COM B) - keep with COM A, then forces break */
+  .ant-card-type-inner:nth-of-type(3) {
+    page-break-before: avoid !important;
+    page-break-after: always !important;
+    break-after: always !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Second divider after COM B - hide it */
+  .ant-divider:nth-of-type(2) {
+    display: none !important;
+  }
+
+  /* ====== PAGE 3: DO12 (if exists) + Cable Specs + Summary ====== */
+
+  /* Fourth type-inner card (DO12 or Cable Specs depending on config) - starts page 3 */
+  .ant-card-type-inner:nth-of-type(4) {
+    page-break-before: auto !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Fifth type-inner card (Cable Specs or Summary) - keep together */
+  .ant-card-type-inner:nth-of-type(5) {
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Sixth type-inner card (Summary) - keep together */
+  .ant-card-type-inner:nth-of-type(6) {
+    page-break-before: avoid !important;
+    page-break-after: auto !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Third divider - hide it */
+  .ant-divider:nth-of-type(3) {
+    display: none !important;
+  }
+
+
+  /* ========== TEXT COLORS ========== */
+  .ant-typography {
+    color: #000 !important;
+    line-height: 1.6 !important;
+    font-weight: 500 !important;
+    font-size: 11pt !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  .ant-typography-secondary {
+    color: #333 !important;
+    line-height: 1.5 !important;
+    font-weight: 500 !important;
+    font-size: 11pt !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  /* Strong text - extra bold */
+  .ant-typography strong,
+  strong,
+  b {
+    color: #000 !important;
+    font-weight: 700 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  /* Regular text and paragraphs */
+  span,
+  p,
+  div {
+    color: #000 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  }
+
+  /* Improve text rendering */
+  * {
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    text-rendering: optimizeLegibility !important;
+  }
+
+  /* ========== ICONS ========== */
+  .anticon {
+    margin-right: 4px !important;
+  }
+}

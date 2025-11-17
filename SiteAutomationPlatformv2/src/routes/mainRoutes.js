@@ -1,0 +1,770 @@
+// ===============================================
+// COMPLETE PARALLEL ENDPOINTS - ALL APIs
+// Every single endpoint parallelized to use new normalized schema
+// URLs: /v2/ prefix for all new endpoints
+// ===============================================
+
+import express from 'express';
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+import gtbConfigDAL from '../../database/dal/gtbConfigDAL.js';
+import equipmentDAL from '../../database/dal/equipmentDAL.js';
+import comptageDAL from '../../database/dal/comptageDAL.js';
+
+dotenv.config();
+
+const router = express.Router();
+
+// Database connection pool
+const db = mysql.createPool({
+  host: process.env.DB_HOST || '127.0.0.1',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASS || 'admin',
+  database: process.env.DB_NAME || 'avancement',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// ===============================================
+// 🔄 TRANSFORMATION HELPERS (Complete Version)
+// ===============================================
+
+// Transform new schema data to legacy format for frontend compatibility - Using EquipmentDAL
+const transformToLegacyFormat = async (siteId) => {
+  const [siteRows] = await db.execute('SELECT * FROM sites WHERE id = ?', [siteId]);
+  if (siteRows.length === 0) return null;
+
+  const site = siteRows[0];
+  const siteName = site.site_name;
+
+  console.log(`📥 [equipmentDAL] Fetching equipment data for site: ${siteName}`);
+
+  // Get zone-aware equipment data using equipmentDAL
+  const [aeroData, climData, rooftopData, lightingData] = await Promise.all([
+    equipmentDAL.getAerothermeData(siteName),
+    equipmentDAL.getClimateData(siteName),
+    equipmentDAL.getRooftopData(siteName),
+    equipmentDAL.getLightingData(siteName)
+  ]);
+
+  console.log(`✅ [equipmentDAL] Retrieved equipment data:`, {
+    aero_fields: Object.keys(aeroData).length,
+    clim_fields: Object.keys(climData).length,
+    rooftop_fields: Object.keys(rooftopData).length,
+    lighting_fields: Object.keys(lightingData).length
+  });
+
+  // Fetch comptage data for all categories
+  console.log(`📊 [comptageDAL] Fetching comptage data for site: ${siteName}`);
+  const comptageData = await comptageDAL.getAllComptageData(siteName);
+  console.log(`✅ [comptageDAL] Retrieved comptage data:`, {
+    aerotherme: comptageData.aerotherme?.length || 0,
+    climate: comptageData.climate?.length || 0,
+    lighting: comptageData.lighting?.length || 0,
+    rooftop: comptageData.rooftop?.length || 0
+  });
+
+  // Debug lighting comptage specifically
+  if (comptageData.lighting && comptageData.lighting.length > 0) {
+    console.log(`💡 [DEBUG] Lighting comptage records:`, comptageData.lighting);
+  }
+
+  // Transform comptage data to flat format with zone suffixes
+  const comptageFlat = {};
+  const comptageCategories = {
+    aerotherme: 'aero',
+    climate: 'clim',
+    lighting: 'eclairage',
+    rooftop: 'rooftop'
+  };
+
+  Object.entries(comptageData).forEach(([category, records]) => {
+    const suffix = comptageCategories[category];
+    if (!records || records.length === 0) return;
+
+    records.forEach((record, index) => {
+      const zone = record.zone;
+      const zoneSuffix = zone ? `_${zone}` : '';
+
+      // Add comptage fields with zone suffixes
+      if (index === 0) {
+        comptageFlat[`nb_comptage_${suffix}${zoneSuffix}`] = records.length;
+        comptageFlat[`commentaire_comptage_${suffix}${zoneSuffix}`] = record.commentaire || '';
+        comptageFlat[`etat_vetuste_comptage_${suffix}${zoneSuffix}`] = record.etat_vetuste || null;
+        comptageFlat[`localisation_comptage_${suffix}${zoneSuffix}`] = record.localisation || null;
+      }
+
+      comptageFlat[`selection_comptage_${suffix}_${index}${zoneSuffix}`] = record.selection_comptage || '';
+      comptageFlat[`type_comptage_${suffix}_${index}${zoneSuffix}`] = record.type || '';
+      comptageFlat[`connexion_comptage_${suffix}_${index}${zoneSuffix}`] = record.connection_type || '';
+      comptageFlat[`puissance_comptage_${suffix}_${index}${zoneSuffix}`] = record.puissance || 0;
+    });
+  });
+
+  // Debug: Show actual lighting data keys
+  console.log(`🔍 [DEBUG] Lighting data keys:`, Object.keys(lightingData));
+  if (Object.keys(lightingData).length > 0) {
+    console.log(`🔍 [DEBUG] Lighting data sample (first 5 fields):`,
+      Object.fromEntries(Object.entries(lightingData).slice(0, 5)));
+  }
+
+  // Merge all equipment data into legacy format
+  const legacy = {
+    id: site.id,
+    site: siteName,
+    client: site.client_name,
+    address: site.address,
+    number1: site.phone_primary,
+    number2: site.phone_secondary,
+    email: site.email,
+    submitted_at: site.created_at,
+    ...aeroData,      // Zone-suffixed aerotherme fields
+    ...climData,      // Zone-suffixed climate fields
+    ...rooftopData,   // Zone-suffixed rooftop fields
+    ...lightingData,  // Zone-suffixed lighting fields (NOW WITH ZONES!)
+    ...comptageFlat   // Zone-suffixed comptage fields
+  };
+
+  console.log(`📊 [DEBUG] Comptage fields in response:`, Object.keys(comptageFlat).length);
+  if (Object.keys(comptageFlat).length > 0) {
+    console.log(`📊 [DEBUG] Sample comptage fields:`, Object.keys(comptageFlat).slice(0, 10));
+    console.log(`📊 [DEBUG] Comptage eclairage fields:`, Object.keys(comptageFlat).filter(k => k.includes('eclairage')));
+  }
+
+  return legacy;
+};
+
+// Helper functions removed - equipmentDAL handles all transformations
+
+// ===============================================
+// 🆕 ALL PARALLEL ENDPOINTS (v2 prefix)
+// ===============================================
+
+// 1️⃣ SAVE PAGE 1 - Site Information (NEW SCHEMA)
+router.post('/save-page1', async (req, res) => {
+  const { site, client, address, number1, number2, email } = req.body;
+
+  console.log(`💾 [V2] Saving site info for: "${site}"`);
+
+  if (!site || typeof site !== 'string' || !site.trim()) {
+    return res.status(400).json({ error: 'Le champ "site" est requis' });
+  }
+
+  const trimmedSite = site.trim();
+
+  try {
+    await db.execute(`
+      INSERT INTO sites (site_name, client_name, address, phone_primary, phone_secondary, email)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        client_name = VALUES(client_name),
+        address = VALUES(address),
+        phone_primary = VALUES(phone_primary),
+        phone_secondary = VALUES(phone_secondary),
+        email = VALUES(email),
+        updated_at = CURRENT_TIMESTAMP
+    `, [
+      trimmedSite,
+      client?.trim() || null,
+      address?.trim() || null,
+      number1?.trim() || null,
+      number2?.trim() || null,
+      email?.trim() || null
+    ]);
+
+    console.log(`✅ [V2] Site info saved successfully: ${trimmedSite}`);
+    res.status(200).json({ message: '✅ Site information saved successfully (v2 schema)' });
+  } catch (err) {
+    console.error('❌ [V2] Error saving site:', err);
+    res.status(500).json({ error: 'Database error', details: err.message });
+  }
+});
+
+// 2️⃣ GET PAGE 1 - Site Information (NEW SCHEMA)
+router.post('/get-page1', async (req, res) => {
+  const { site } = req.body;
+
+  console.log(`📥 [V2] Getting site info for: "${site}"`);
+
+  if (!site || typeof site !== 'string' || !site.trim()) {
+    return res.status(400).json({ error: 'Invalid site name' });
+  }
+
+  try {
+    const [rows] = await db.execute(
+      'SELECT site_name as site, client_name as client, address, phone_primary as number1, phone_secondary as number2, email FROM sites WHERE site_name = ? LIMIT 1',
+      [site.trim()]
+    );
+
+    if (rows.length === 0) {
+      console.log(`⚠️ [V2] Site not found: ${site}`);
+      return res.status(404).json({ error: 'Site not found' });
+    }
+
+    console.log(`✅ [V2] Site info retrieved: ${site}`);
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('❌ [V2] Error fetching site:', err);
+    res.status(500).json({ error: 'Database error', details: err.message });
+  }
+});
+
+// 3️⃣ LIST SITES (NEW SCHEMA)
+router.post('/list-sites', async (_req, res) => {
+  console.log('📋 [V2] Getting site list');
+
+  try {
+    const [rows] = await db.execute('SELECT site_name as site FROM sites ORDER BY site_name ASC');
+    console.log(`✅ [V2] Found ${rows.length} sites`);
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ [V2] Error fetching sites:', err);
+    res.status(500).json({ error: 'Database error', details: err.message });
+  }
+});
+
+// 4️⃣ GET PAGE 2 - Equipment Data (NORMALIZED SCHEMA ONLY)
+router.post('/get-page2', async (req, res) => {
+  const { site } = req.body;
+
+  console.log(`📥 Getting equipment data for site: "${site}"`);
+
+  if (!site || typeof site !== 'string' || !site.trim()) {
+    return res.status(400).json({ error: 'Invalid or missing site' });
+  }
+
+  try {
+    // Use normalized schema only
+    console.log(`✅ Using NORMALIZED schema for site: ${site}`);
+    const [siteRows] = await db.execute('SELECT id FROM sites WHERE site_name = ?', [site.trim()]);
+
+    if (siteRows.length === 0) {
+      console.log(`⚠️ Site not found: ${site}, returning empty data`);
+      return res.json({ site: site.trim() }); // Return minimal data for new site
+    }
+
+    const siteId = siteRows[0].id;
+    console.log(`🔄 Calling transformToLegacyFormat for siteId: ${siteId}`);
+    const legacyData = await transformToLegacyFormat(siteId);
+
+    console.log(`✅ Equipment data retrieved from normalized schema`);
+    console.log(`📦 Total fields in response: ${Object.keys(legacyData || {}).length}`);
+    console.log(`🔍 Equipment field sample:`, Object.keys(legacyData || {}).filter(k => k.includes('aero') || k.includes('clim')).slice(0, 5));
+    res.json(legacyData);
+  } catch (err) {
+    console.error('❌ Error fetching equipment data:', err);
+    console.error('❌ Stack trace:', err.stack);
+    res.status(500).json({ error: 'Database error', details: err.message });
+  }
+});
+
+// 5️⃣ SAVE PAGE 2 - Equipment Data (NORMALIZED SCHEMA - Using EquipmentDAL + ComptageDAL)
+router.post('/save_page2', async (req, res) => {
+  const { site, ...legacyData } = req.body;
+
+  console.log(`💾 [equipmentDAL] Saving equipment data for site: "${site}"`);
+  console.log(`🔍 [DEBUG] Checking localisation and etat_vetuste fields:`);
+  console.log(`   - localisation_aerotherme:`, legacyData.localisation_aerotherme);
+  console.log(`   - etat_vetuste_aerotherme:`, legacyData.etat_vetuste_aerotherme);
+  console.log(`   - localisation_clim:`, legacyData.localisation_clim);
+  console.log(`   - etat_vetuste_clim:`, legacyData.etat_vetuste_clim);
+
+  if (!site) {
+    return res.status(400).json({ error: 'Missing site in request' });
+  }
+
+  try {
+    // ✅ USE NORMALIZED SCHEMA ONLY - via equipmentDAL
+    console.log(`✅ Using NORMALIZED schema (equipmentDAL) to save equipment data`);
+
+    // Ensure site exists in sites table
+    const [siteRows] = await db.execute('SELECT id FROM sites WHERE site_name = ?', [site]);
+    if (siteRows.length === 0) {
+      await db.execute('INSERT INTO sites (site_name) VALUES (?)', [site]);
+      console.log(`✅ Created new site entry: ${site}`);
+    }
+
+    // Extract and save comptage data for all 4 categories (ZONE-AWARE)
+    const AVAILABLE_ZONES = [
+      'surface_de_vente', 'galerie_marchande', 'reserve', 'bureau',
+      'entrepot', 'parking', 'autre'
+    ];
+
+    const extractComptageData = (category, suffix) => {
+      const comptageRecords = [];
+
+      // Check for zone-suffixed fields
+      AVAILABLE_ZONES.forEach(zone => {
+        const nbKey = `nb_comptage_${suffix}_${zone}`;
+        const localisationKey = `localisation_comptage_${suffix}_${zone}`;
+        const etatVetusteKey = `etat_vetuste_comptage_${suffix}_${zone}`;
+
+        const nbComptage = parseInt(legacyData[nbKey]) || 0;
+        const hasLocalisation = legacyData[localisationKey];
+        const hasEtatVetuste = legacyData[etatVetusteKey];
+
+        // Save if nb > 0 OR if localisation/etat_vetuste are filled
+        if (nbComptage > 0 || hasLocalisation || hasEtatVetuste) {
+          console.log(`📊 [Comptage] Found ${nbComptage || 0} ${category} comptage records for zone: ${zone} (or metadata only)`);
+
+          // If nb = 0 but metadata exists, create one record with metadata
+          const recordCount = nbComptage > 0 ? nbComptage : 1;
+
+          for (let i = 0; i < recordCount; i++) {
+            const record = {
+              zone: zone,
+              nb: i + 1,
+              selection_comptage: legacyData[`selection_comptage_${suffix}_${i}_${zone}`] || null,
+              type: legacyData[`type_comptage_${suffix}_${i}_${zone}`] || null,
+              connection_type: legacyData[`connexion_comptage_${suffix}_${i}_${zone}`] || null,
+              puissance: parseFloat(legacyData[`puissance_comptage_${suffix}_${i}_${zone}`]) || 0,
+              commentaire: legacyData[`commentaire_comptage_${suffix}_${zone}`] || '',
+              etat_vetuste: legacyData[etatVetusteKey] || null,
+              localisation: legacyData[localisationKey] || null
+            };
+            comptageRecords.push(record);
+          }
+        }
+      });
+
+      // Also check for non-zoned fields (legacy support)
+      const nbKey = `nb_comptage_${suffix}`;
+      const localisationKey = `localisation_comptage_${suffix}`;
+      const etatVetusteKey = `etat_vetuste_comptage_${suffix}`;
+
+      const nbComptage = parseInt(legacyData[nbKey]) || 0;
+      const hasLocalisation = legacyData[localisationKey];
+      const hasEtatVetuste = legacyData[etatVetusteKey];
+
+      // Save if nb > 0 OR if localisation/etat_vetuste are filled
+      if (nbComptage > 0 || hasLocalisation || hasEtatVetuste) {
+        console.log(`📊 [Comptage] Found ${nbComptage || 0} ${category} comptage records (no zone, or metadata only)`);
+
+        // If nb = 0 but metadata exists, create one record with metadata
+        const recordCount = nbComptage > 0 ? nbComptage : 1;
+
+        for (let i = 0; i < recordCount; i++) {
+          const record = {
+            zone: null,
+            nb: i + 1,
+            selection_comptage: legacyData[`selection_comptage_${suffix}_${i}`] || null,
+            type: legacyData[`type_comptage_${suffix}_${i}`] || null,
+            connection_type: legacyData[`connexion_comptage_${suffix}_${i}`] || null,
+            puissance: parseFloat(legacyData[`puissance_comptage_${suffix}_${i}`]) || 0,
+            commentaire: legacyData[`commentaire_comptage_${suffix}`] || '',
+            etat_vetuste: legacyData[etatVetusteKey] || null,
+            localisation: legacyData[localisationKey] || null
+          };
+          comptageRecords.push(record);
+        }
+      }
+
+      return comptageRecords;
+    };
+
+    // Save equipment data (aerotherme, climate, rooftop, lighting)
+    const saveResults = await Promise.all([
+      equipmentDAL.saveAerothermeData(site, legacyData),
+      equipmentDAL.saveClimateData(site, legacyData),
+      equipmentDAL.saveRooftopData(site, legacyData),
+      equipmentDAL.saveLightingData(site, legacyData)
+    ]);
+
+    // Save comptage data for all 4 categories
+    const comptageResults = {
+      aero: { success: true },
+      clim: { success: true },
+      rooftop: { success: true },
+      eclairage: { success: true }
+    };
+
+    try {
+      // Comptage Aerotherme
+      const aeroComptage = extractComptageData('aerotherme', 'aero');
+      if (aeroComptage.length > 0) {
+        comptageResults.aero = await comptageDAL.saveComptageData(site, 'aerotherme', aeroComptage);
+        console.log(`✅ [Comptage] Saved ${aeroComptage.length} aerotherme comptage records`);
+      }
+
+      // Comptage Climate
+      const climComptage = extractComptageData('climate', 'clim');
+      if (climComptage.length > 0) {
+        comptageResults.clim = await comptageDAL.saveComptageData(site, 'climate', climComptage);
+        console.log(`✅ [Comptage] Saved ${climComptage.length} climate comptage records`);
+      }
+
+      // Comptage Rooftop
+      const rooftopComptage = extractComptageData('rooftop', 'rooftop');
+      if (rooftopComptage.length > 0) {
+        comptageResults.rooftop = await comptageDAL.saveComptageData(site, 'rooftop', rooftopComptage);
+        console.log(`✅ [Comptage] Saved ${rooftopComptage.length} rooftop comptage records`);
+      }
+
+      // Comptage Eclairage
+      const eclairageComptage = extractComptageData('lighting', 'eclairage');
+      if (eclairageComptage.length > 0) {
+        comptageResults.eclairage = await comptageDAL.saveComptageData(site, 'lighting', eclairageComptage);
+        console.log(`✅ [Comptage] Saved ${eclairageComptage.length} eclairage comptage records`);
+      }
+    } catch (comptageErr) {
+      console.error('❌ [Comptage] Error saving comptage data:', comptageErr);
+    }
+
+    console.log(`✅ [equipmentDAL] All equipment data saved successfully for site: ${site}`);
+    console.log(`   - Aerotherme: ${saveResults[0].success ? '✅' : '❌'}`);
+    console.log(`   - Climate: ${saveResults[1].success ? '✅' : '❌'}`);
+    console.log(`   - Rooftop: ${saveResults[2].success ? '✅' : '❌'}`);
+    console.log(`   - Lighting: ${saveResults[3].success ? '✅' : '❌'}`);
+    console.log(`   - Comptage Aero: ${comptageResults.aero.success ? '✅' : '❌'}`);
+    console.log(`   - Comptage Clim: ${comptageResults.clim.success ? '✅' : '❌'}`);
+    console.log(`   - Comptage Rooftop: ${comptageResults.rooftop.success ? '✅' : '❌'}`);
+    console.log(`   - Comptage Eclairage: ${comptageResults.eclairage.success ? '✅' : '❌'}`);
+
+    res.status(200).json({
+      success: true,
+      message: '✅ Equipment data saved successfully to normalized schema',
+      details: {
+        aerotherme: saveResults[0].success,
+        climate: saveResults[1].success,
+        rooftop: saveResults[2].success,
+        lighting: saveResults[3].success,
+        comptage_aero: comptageResults.aero.success,
+        comptage_clim: comptageResults.clim.success,
+        comptage_rooftop: comptageResults.rooftop.success,
+        comptage_eclairage: comptageResults.eclairage.success
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ [equipmentDAL] Error saving equipment data:', err);
+    console.error('❌ Stack trace:', err.stack);
+    res.status(500).json({ error: 'Equipment save failed', details: err.message });
+  }
+});
+
+// 6️⃣ GET PAGE 3 - GTB Configuration (NEW SCHEMA)
+router.post('/get-page3', async (req, res) => {
+  const { site, devis_name } = req.body;
+
+  console.log(`📥 [V2 GTB] Getting GTB config for site: "${site}", devis: "${devis_name}"`);
+
+  if (!site || typeof site !== 'string' || !site.trim()) {
+    return res.status(400).json({ error: 'Invalid or missing site' });
+  }
+
+  if (!devis_name) {
+    return res.status(400).json({ error: 'Invalid or missing devis_name' });
+  }
+
+  try {
+    // ✅ USE NEW DAL: Fetch GTB configuration from normalized tables (filtered by devis)
+    const gtbConfig = await gtbConfigDAL.getGtbConfig(site.trim(), devis_name);
+
+    if (!gtbConfig) {
+      console.log(`ℹ️ [V2 GTB] No GTB config found for site: ${site}, devis: ${devis_name}, returning empty data`);
+      return res.json({ site: site.trim(), devis_name: devis_name });
+    }
+
+    console.log(`✅ [V2 GTB] GTB config retrieved for site: ${site}, devis: ${devis_name}`);
+    res.json(gtbConfig);
+  } catch (err) {
+    console.error('❌ [V2 GTB] Error fetching GTB config:', err);
+    res.status(500).json({ error: 'Database error', details: err.message });
+  }
+});
+
+// 7️⃣ SAVE PAGE 3 - GTB Configuration (NEW SCHEMA)
+router.post('/save_page3', async (req, res) => {
+  const { site, devis_name, ...gtbData } = req.body;
+
+  console.log(`💾 [V2 GTB] Saving GTB config for site: "${site}", devis: "${devis_name}"`);
+
+  if (!site) {
+    return res.status(400).json({ error: 'Missing site in request' });
+  }
+
+  if (!devis_name) {
+    return res.status(400).json({ error: 'Missing devis_name in request' });
+  }
+
+  try {
+    // ✅ USE NEW DAL: Save GTB configuration to normalized tables (with devis)
+    const result = await gtbConfigDAL.saveGtbConfig(site.trim(), devis_name, gtbData);
+
+    console.log(`✅ [V2 GTB] GTB config saved successfully for site: ${site}, devis: ${devis_name}`);
+    res.status(200).json({
+      success: true,
+      message: `✅ GTB configuration saved for site: ${site}, devis: ${devis_name}`,
+      details: result
+    });
+
+  } catch (err) {
+    console.error('❌ [V2 GTB] Error saving GTB config:', err);
+    res.status(500).json({ error: 'GTB save failed', details: err.message });
+  }
+});
+
+// 8️⃣ LEGACY FORM_SQL ENDPOINT (NEW SCHEMA)
+router.get('/form_sql/:site', async (req, res) => {
+  const site = req.params.site;
+
+  console.log(`📥 [V2] Getting complete site data (legacy format) for: "${site}"`);
+
+  try {
+    const [siteRows] = await db.execute('SELECT id FROM sites WHERE site_name = ?', [site]);
+
+    if (siteRows.length === 0) {
+      console.log(`⚠️ [V2] Site not found for legacy endpoint: ${site}`);
+      return res.status(404).json({ error: 'Site not found' });
+    }
+
+    const siteId = siteRows[0].id;
+    const legacyData = await transformToLegacyFormat(siteId);
+
+    console.log(`✅ [V2] Complete site data retrieved for: ${site}`);
+    res.json(legacyData);
+  } catch (err) {
+    console.error('❌ [V2] Error fetching complete site data:', err);
+    res.status(500).json({ error: 'Database error', details: err.message });
+  }
+});
+
+// 9️⃣ UPDATE POSITION (NEW SCHEMA) - Deprecated, positions stored in image_sql
+router.put('/update-position', async (req, res) => {
+  const { site, x, y } = req.body;
+
+  console.log(`📍 [V2] Updating position for site: "${site}", x: ${x}, y: ${y}`);
+
+  try {
+    const [siteRows] = await db.execute('SELECT id FROM sites WHERE site_name = ?', [site]);
+    if (siteRows.length === 0) {
+      return res.status(404).json({ error: 'Site not found' });
+    }
+
+    console.log(`⚠️ [V2] Position update deprecated - positions stored in image_sql table`);
+    res.json({ success: true, message: 'Position endpoint deprecated, use image_sql' });
+  } catch (err) {
+    console.error('❌ [V2] Error updating position:', err);
+    res.status(500).json({ error: 'Position update failed', details: err.message });
+  }
+});
+
+// 🔟 SAVE COMPTAGE - Save metering data for a category
+router.post('/save-comptage', async (req, res) => {
+  const { site, category, comptageData } = req.body;
+
+  console.log(`💾 [Comptage] Saving comptage data for site: "${site}", category: "${category}"`);
+
+  if (!site || !category) {
+    return res.status(400).json({ error: 'Missing site or category in request' });
+  }
+
+  const validCategories = ['aerotherme', 'climate', 'lighting', 'rooftop'];
+  if (!validCategories.includes(category)) {
+    return res.status(400).json({ error: 'Invalid category. Must be: aerotherme, climate, lighting, or rooftop' });
+  }
+
+  try {
+    const result = await comptageDAL.saveComptageData(site.trim(), category, comptageData || []);
+    console.log(`✅ [Comptage] Saved successfully for ${category}`);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('❌ [Comptage] Error saving comptage data:', err);
+    res.status(500).json({ error: 'Comptage save failed', details: err.message });
+  }
+});
+
+// 1️⃣1️⃣ GET COMPTAGE - Get metering data for a site
+router.post('/get-comptage', async (req, res) => {
+  const { site, category } = req.body;
+
+  console.log(`📥 [Comptage] Getting comptage data for site: "${site}", category: "${category || 'all'}"`);
+
+  if (!site) {
+    return res.status(400).json({ error: 'Missing site in request' });
+  }
+
+  try {
+    let result;
+    if (category) {
+      const validCategories = ['aerotherme', 'climate', 'lighting', 'rooftop'];
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({ error: 'Invalid category' });
+      }
+      result = await comptageDAL.getComptageData(site.trim(), category);
+    } else {
+      result = await comptageDAL.getAllComptageData(site.trim());
+    }
+
+    console.log(`✅ [Comptage] Retrieved comptage data`);
+    res.json(result);
+  } catch (err) {
+    console.error('❌ [Comptage] Error fetching comptage data:', err);
+    res.status(500).json({ error: 'Comptage fetch failed', details: err.message });
+  }
+});
+
+// 1️⃣2️⃣ DELETE COMPTAGE RECORD - Delete a single comptage record
+router.delete('/delete-comptage/:category/:id', async (req, res) => {
+  const { category, id } = req.params;
+
+  console.log(`🗑️ [Comptage] Deleting comptage record: category="${category}", id=${id}`);
+
+  const validCategories = ['aerotherme', 'climate', 'lighting', 'rooftop'];
+  if (!validCategories.includes(category)) {
+    return res.status(400).json({ error: 'Invalid category' });
+  }
+
+  try {
+    const result = await comptageDAL.deleteComptageRecord(category, parseInt(id));
+    console.log(`✅ [Comptage] Deleted successfully`);
+    res.json(result);
+  } catch (err) {
+    console.error('❌ [Comptage] Error deleting comptage record:', err);
+    res.status(500).json({ error: 'Comptage delete failed', details: err.message });
+  }
+});
+
+// 1️⃣3️⃣ UPDATE COMPTAGE RECORD - Update a single comptage record
+router.put('/update-comptage/:category/:id', async (req, res) => {
+  const { category, id } = req.params;
+  const updateData = req.body;
+
+  console.log(`✏️ [Comptage] Updating comptage record: category="${category}", id=${id}`);
+
+  const validCategories = ['aerotherme', 'climate', 'lighting', 'rooftop'];
+  if (!validCategories.includes(category)) {
+    return res.status(400).json({ error: 'Invalid category' });
+  }
+
+  try {
+    const result = await comptageDAL.updateComptageRecord(category, parseInt(id), updateData);
+    console.log(`✅ [Comptage] Updated successfully`);
+    res.json(result);
+  } catch (err) {
+    console.error('❌ [Comptage] Error updating comptage record:', err);
+    res.status(500).json({ error: 'Comptage update failed', details: err.message });
+  }
+});
+
+// 1️⃣4️⃣ SAVE WIRING DIAGRAM (Page 7)
+router.post('/save-wiring-diagram', async (req, res) => {
+  const { site, do12, comA, comB } = req.body;
+
+  console.log(`💾 [Wiring] Saving wiring diagram for site: "${site}"`);
+
+  if (!site) {
+    return res.status(400).json({ error: 'Missing site in request' });
+  }
+
+  try {
+    // Store wiring diagram data in a dedicated table
+    await db.execute(`
+      INSERT INTO wiring_diagrams (site_name, do12_data, com_a_data, com_b_data)
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        do12_data = VALUES(do12_data),
+        com_a_data = VALUES(com_a_data),
+        com_b_data = VALUES(com_b_data),
+        updated_at = CURRENT_TIMESTAMP
+    `, [
+      site.trim(),
+      JSON.stringify(do12 || []),
+      JSON.stringify(comA || []),
+      JSON.stringify(comB || [])
+    ]);
+
+    console.log(`✅ [Wiring] Wiring diagram saved successfully for site: ${site}`);
+    res.status(200).json({
+      success: true,
+      message: '✅ Wiring diagram saved successfully'
+    });
+  } catch (err) {
+    console.error('❌ [Wiring] Error saving wiring diagram:', err);
+    res.status(500).json({ error: 'Wiring diagram save failed', details: err.message });
+  }
+});
+
+// 1️⃣5️⃣ GET WIRING DIAGRAM (Page 7)
+router.post('/get-wiring-diagram', async (req, res) => {
+  const { site } = req.body;
+
+  console.log(`📥 [Wiring] Getting wiring diagram for site: "${site}"`);
+
+  if (!site) {
+    return res.status(400).json({ error: 'Missing site in request' });
+  }
+
+  try {
+    const [rows] = await db.execute(
+      'SELECT do12_data, com_a_data, com_b_data FROM wiring_diagrams WHERE site_name = ? LIMIT 1',
+      [site.trim()]
+    );
+
+    if (rows.length === 0) {
+      console.log(`ℹ️ [Wiring] No wiring diagram found for site: ${site}`);
+      return res.json({ data: null });
+    }
+
+    const wiringData = {
+      do12: JSON.parse(rows[0].do12_data || '[]'),
+      comA: JSON.parse(rows[0].com_a_data || '[]'),
+      comB: JSON.parse(rows[0].com_b_data || '[]')
+    };
+
+    console.log(`✅ [Wiring] Wiring diagram retrieved for site: ${site}`);
+    res.json({ data: wiringData });
+  } catch (err) {
+    console.error('❌ [Wiring] Error fetching wiring diagram:', err);
+    res.status(500).json({ error: 'Wiring diagram fetch failed', details: err.message });
+  }
+});
+
+// 1️⃣6️⃣ TEST ENDPOINT - Health Check
+router.get('/test', async (_req, res) => {
+  try {
+    const [sites] = await db.execute('SELECT COUNT(*) as count FROM sites');
+    const [aero] = await db.execute('SELECT COUNT(*) as count FROM equipment_aerotherme');
+    const [clim] = await db.execute('SELECT COUNT(*) as count FROM equipment_climate');
+    const [rooftop] = await db.execute('SELECT COUNT(*) as count FROM equipment_rooftop');
+    const [lighting] = await db.execute('SELECT COUNT(*) as count FROM equipment_lighting');
+    const [gtb] = await db.execute('SELECT COUNT(*) as count FROM gtb_modules');
+
+    res.json({
+      message: '✅ Normalized schema endpoints working!',
+      version: 'v2-equipmentDAL-comptage-wiring',
+      stats: {
+        sites: sites[0].count,
+        equipment_aerotherme: aero[0].count,
+        equipment_climate: clim[0].count,
+        equipment_rooftop: rooftop[0].count,
+        equipment_lighting: lighting[0].count,
+        gtb_modules: gtb[0].count
+      },
+      endpoints_available: [
+        'POST /save-page1',
+        'POST /get-page1',
+        'POST /list-sites',
+        'POST /get-page2 (via equipmentDAL)',
+        'POST /save_page2 (via equipmentDAL)',
+        'POST /get-page3 (via gtbConfigDAL)',
+        'POST /save_page3 (via gtbConfigDAL)',
+        'POST /save-comptage (via comptageDAL)',
+        'POST /get-comptage (via comptageDAL)',
+        'DELETE /delete-comptage/:category/:id (via comptageDAL)',
+        'PUT /update-comptage/:category/:id (via comptageDAL)',
+        'POST /save-wiring-diagram',
+        'POST /get-wiring-diagram',
+        'GET /form_sql/:site',
+        'PUT /update-position (deprecated)',
+        'GET /test'
+      ]
+    });
+  } catch (err) {
+    console.error('❌ Test endpoint error:', err);
+    res.status(500).json({ error: 'Test failed', details: err.message });
+  }
+});
+
+export default router;

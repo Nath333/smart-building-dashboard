@@ -1,0 +1,742 @@
+import { useEffect, useState } from 'react';
+import { Form, Typography, Empty, Button, message, Card, Space, Tag, Badge } from 'antd';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import EditableCard from './equipment/EditableCard';
+import { FIELD_REGISTRY, cleanupDynamicFields, COMPTAGE_OPTIONS } from './equipment/constants';
+import { usePersistedState } from '../hooks/usePersistedState';
+import { useSiteContext } from '../hooks/useSiteContext';
+import { usePageDataMulti } from '../hooks/usePageData';
+import { submitForm2, fetchSiteForm2Data } from '../api/formDataApi';
+import { fetchSqlImages2 } from '../api/imageApi';
+import PageLayout from '../components/layout/PageLayout';
+import FormCard from '../components/common/FormCard';
+import ActionButtons from '../components/common/ActionButtons';
+import { LAYOUT_CONSTANTS } from '../components/layout/layoutConstants';
+import ZoneManagementModal from './equipment/ZoneManagementModal';
+import {
+  parseCardKey,
+  getCardLabel,
+  flattenZoneData,
+  groupDataByZones,
+  COMPTAGE_TYPES,
+  createCardKey
+} from './equipment/zoneUtils';
+
+function EquipmentPage() {
+  const [form] = Form.useForm();
+  const [selected, setSelected] = usePersistedState('selectedOptions', []);
+  const [data, setData] = usePersistedState('editableData', {});
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [zoneModalVisible, setZoneModalVisible] = useState(false);
+
+  // Comptage section state (separate from equipment)
+  const [selectedComptage, setSelectedComptage] = usePersistedState('selectedComptage', []);
+  const [dataComptage, setDataComptage] = usePersistedState('editableDataComptage', {});
+  const [currentComptageIndex, setCurrentComptageIndex] = useState(0);
+  const [zoneModalComptageVisible, setZoneModalComptageVisible] = useState(false);
+
+  const { siteName, isValid } = useSiteContext();
+
+  // Fetch form data and images in parallel using the new hook
+  const { data: [formData, images] } = usePageDataMulti(
+    siteName,
+    [fetchSiteForm2Data, fetchSqlImages2],
+    {
+      autoFetch: isValid,
+      showErrorMessage: true,
+      errorContext: 'Equipment data fetch'
+    }
+  );
+
+  // Note: Legacy groupDataBySections removed - now using zone-based grouping only
+
+  // Process fetched data into grouped sections (Step 3) - ZONE MODE ONLY
+  useEffect(() => {
+    if (!formData && !images) return;
+
+    // Ensure we have valid data
+    const validFormData = formData && typeof formData === 'object' ? formData : {};
+    const validImages = Array.isArray(images) ? images : [];
+
+    // Always use zone-aware grouping
+    const grouped = groupDataByZones(validFormData, ['Aero', 'Clim', 'Rooftop', 'Eclairage']);
+
+    // Add images to grouped data (zone-aware filtering)
+    Object.keys(grouped).forEach(cardKey => {
+      const { type, zone } = parseCardKey(cardKey);
+      const imagesForCard = validImages
+        .filter(img => {
+          // Match by type (required)
+          const typeMatches = img.type?.toLowerCase() === type.toLowerCase();
+          // Match by zone (required if card has zone, else NULL zone images match)
+          const zoneMatches = zone
+            ? img.zone_name === zone  // Exact zone match
+            : !img.zone_name;  // Legacy: NULL zone images for cards without zones
+
+          return typeMatches && zoneMatches;
+        })
+        .map(img => ({
+          url: img.image_url || img.url_viewer,
+          title: img.title,
+          delete_url: img.delete_url,
+        }))
+        .filter(img => !!img.url);
+
+      if (grouped[cardKey]) {
+        grouped[cardKey].images = imagesForCard;
+      }
+    });
+
+    setSelected(Object.keys(grouped)); // Auto-select categories with data
+    setData(grouped);
+
+    // Process Comptage data (separate section) - Zone-aware like equipment
+    const comptageTypeValues = COMPTAGE_TYPES.map(t => t.value);
+    const groupedComptage = groupDataByZones(validFormData, comptageTypeValues);
+
+    // Add images to Comptage grouped data (zone-aware)
+    Object.keys(groupedComptage).forEach(cardKey => {
+      const { type, zone } = parseCardKey(cardKey);
+      const imagesForCard = validImages
+        .filter(img => {
+          const typeMatches = img.type?.toLowerCase() === type.toLowerCase();
+          const zoneMatches = zone ? img.zone_name === zone : !img.zone_name;
+          return typeMatches && zoneMatches;
+        })
+        .map(img => ({
+          url: img.image_url || img.url_viewer,
+          title: img.title,
+          delete_url: img.delete_url,
+        }))
+        .filter(img => !!img.url);
+
+      if (groupedComptage[cardKey]) {
+        groupedComptage[cardKey].images = imagesForCard;
+      }
+    });
+
+    // Store all comptage data (selectedComptage will be set dynamically by useEffect)
+    setDataComptage(groupedComptage);
+  }, [formData, images, setSelected, setData, setSelectedComptage, setDataComptage]);
+
+useEffect(() => {
+  // Reset slide index when categories change, but ensure it's within bounds
+  setCurrentSlideIndex((prevIndex) => {
+    if (selected.length === 0) return 0;
+    return Math.min(prevIndex, selected.length - 1);
+  });
+  form.setFieldsValue({ options: selected });
+}, [form, selected]);
+
+useEffect(() => {
+  // Reset comptage slide index when categories change
+  setCurrentComptageIndex((prevIndex) => {
+    if (selectedComptage.length === 0) return 0;
+    return Math.min(prevIndex, selectedComptage.length - 1);
+  });
+}, [selectedComptage]);
+
+// Update Comptage cards dynamically based on CURRENTLY VIEWED equipment card
+useEffect(() => {
+  if (selected.length === 0 || currentSlideIndex >= selected.length) {
+    setSelectedComptage([]);
+    return;
+  }
+
+  // Map equipment types to their corresponding comptage types
+  const equipmentToComptageMap = {
+    'Aero': 'Comptage_Aero',
+    'Clim': 'Comptage_Clim',
+    'Rooftop': 'Comptage_Rooftop',
+    'Eclairage': 'Comptage_Eclairage'
+  };
+
+  // Get the currently viewed equipment card
+  const currentCardKey = selected[currentSlideIndex];
+  const { type, zone } = parseCardKey(currentCardKey);
+
+  // Show comptage card for the CURRENTLY VIEWED equipment (with same zone if applicable)
+  const comptageType = equipmentToComptageMap[type];
+  if (!comptageType) {
+    setSelectedComptage([]);
+    return;
+  }
+
+  // Create comptage card key with same zone as equipment card
+  const comptageKey = createCardKey(comptageType, zone);
+
+  // Check if we need to update dataComptage
+  setDataComptage(prev => {
+    if (prev[comptageKey]) {
+      // Card already exists, no update needed
+      setSelectedComptage([comptageKey]);
+      return prev;
+    }
+
+    // Create new card
+    const updated = {
+      ...prev,
+      [comptageKey]: {
+        data: {},
+        status: {},
+        images: []
+      }
+    };
+    setSelectedComptage([comptageKey]);
+    return updated;
+  });
+}, [selected, currentSlideIndex, setSelectedComptage, setDataComptage]);
+
+  const handleCardChange = (key, updates) => {
+    setData((prev) => {
+      const prevItem = prev[key] || { data: {}, status: {}, images: [] };
+      const nextData =
+        typeof updates === 'function' ? updates(prevItem) : { ...prevItem, ...updates };
+
+      // 🧹 Unified cleanup for dynamic fields using field registry
+      if (nextData.data) {
+        nextData.data = cleanupDynamicFields(nextData.data, key);
+      }
+
+      return { ...prev, [key]: nextData };
+    });
+  };
+
+  const handleAddZoneCard = (cardKey) => {
+    const newCardData = {
+      data: {},
+      status: {},
+      images: []
+    };
+
+    // Update data first
+    setData(prev => {
+      const updated = {
+        ...prev,
+        [cardKey]: newCardData
+      };
+      return updated;
+    });
+
+    // Then update selected array
+    setSelected(prev => {
+      const updated = [...prev, cardKey];
+      return updated;
+    });
+
+    // Navigate to the newly added card (will be at the end)
+    setTimeout(() => {
+      setCurrentSlideIndex(() => {
+        const newIndex = selected.length; // This will be the index of the new card
+        return newIndex;
+      });
+    }, 100);
+  };
+
+  const handleRemoveZoneCard = (cardKey) => {
+    // Update data
+    setData(prev => {
+      const updated = { ...prev };
+      delete updated[cardKey];
+      return updated;
+    });
+
+    // Update selected array
+    setSelected(prev => {
+      const updated = prev.filter(key => key !== cardKey);
+      return updated;
+    });
+
+    // Reset to first card
+    setCurrentSlideIndex(0);
+  };
+
+  // Comptage handlers (duplicate of equipment handlers)
+  const handleCardChangeComptage = (key, updates) => {
+    setDataComptage((prev) => {
+      const prevItem = prev[key] || { data: {}, status: {}, images: [] };
+      const nextData =
+        typeof updates === 'function' ? updates(prevItem) : { ...prevItem, ...updates };
+
+      if (nextData.data) {
+        nextData.data = cleanupDynamicFields(nextData.data, key);
+      }
+
+      return { ...prev, [key]: nextData };
+    });
+  };
+
+  const handleAddZoneCardComptage = (cardKey) => {
+    const newCardData = {
+      data: {},
+      status: {},
+      images: []
+    };
+
+    setDataComptage(prev => ({
+      ...prev,
+      [cardKey]: newCardData
+    }));
+
+    setSelectedComptage(prev => [...prev, cardKey]);
+
+    setTimeout(() => {
+      setCurrentComptageIndex(selectedComptage.length);
+    }, 100);
+  };
+
+  const handleRemoveZoneCardComptage = (cardKey) => {
+    setDataComptage(prev => {
+      const updated = { ...prev };
+      delete updated[cardKey];
+      return updated;
+    });
+
+    setSelectedComptage(prev => prev.filter(key => key !== cardKey));
+    setCurrentComptageIndex(0);
+  };
+
+  // Helper function to calculate equipment count for each type
+  const getEquipmentCount = (cardKey) => {
+    const cardData = data[cardKey]?.data || {};
+    const { type } = parseCardKey(cardKey);
+
+    switch (type) {
+      case 'Aero':
+        return parseInt(cardData.nb_aerotherme, 10) || 0;
+
+      case 'Clim':
+        const nbClimIr = parseInt(cardData.nb_clim_ir, 10) || 0;
+        const nbClimWire = parseInt(cardData.nb_clim_wire, 10) || 0;
+        return nbClimIr + nbClimWire;
+
+      case 'Rooftop':
+        return parseInt(cardData.nb_rooftop, 10) || 0;
+
+      case 'Eclairage':
+        const interieur = parseInt(cardData.Eclairage_interieur, 10) || 0;
+        const exterieur = parseInt(cardData.Eclairage_exterieur, 10) || 0;
+        return interieur + exterieur;
+
+      default:
+        return 0;
+    }
+  };
+
+  // Helper for Comptage equipment count
+  const getComptageCount = (cardKey) => {
+    const cardData = dataComptage[cardKey]?.data || {};
+    return parseInt(cardData.nb_comptage, 10) || 0;
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent double submission
+
+    try {
+      setIsSubmitting(true);
+
+      // Combine equipment and comptage data
+      const payload = selected.reduce((acc, key) => {
+        acc[key] = data[key];
+        return acc;
+      }, {});
+
+      const payloadComptage = selectedComptage.reduce((acc, key) => {
+        acc[key] = dataComptage[key];
+        return acc;
+      }, {});
+
+      console.log('🔍 [DEBUG] Comptage payload before flatten:', {
+        selectedComptage,
+        payloadComptage,
+        keys: Object.keys(payloadComptage)
+      });
+
+      // Merge both payloads
+      const combinedPayload = { ...payload, ...payloadComptage };
+
+      // Always use zone-aware flattening
+      const flatData = flattenZoneData(combinedPayload);
+
+      console.log('🔍 [DEBUG] Flattened comptage fields:',
+        Object.keys(flatData).filter(k => k.includes('comptage'))
+      );
+
+      await submitForm2({
+        site: siteName,
+        ...flatData,
+      });
+
+      message.success('Données sauvegardées avec succès');
+    } catch (error) {
+      console.error('Submit error:', error);
+      message.error('Erreur lors de la sauvegarde');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  
+return (
+  <PageLayout title="Équipements du site">
+
+<FormCard
+  style={{
+    padding: LAYOUT_CONSTANTS.PADDING.CARD,
+    backgroundColor: '#ffffff',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+    borderRadius: 8
+  }}
+  bordered={false}
+>
+  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+    {/* Header with Add button */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Typography.Title level={4} style={{ margin: 0 }}>
+        Équipements par zone
+      </Typography.Title>
+
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={() => setZoneModalVisible(true)}
+        size="large"
+      >
+        Ajouter une zone
+      </Button>
+    </div>
+
+    <Form layout="vertical" form={form} style={{ marginBottom: 0 }}>
+      <Form.Item style={{ marginBottom: 16 }}>
+        {selected.length === 0 ? (
+          <Empty
+            description="Aucune carte configurée. Cliquez sur 'Ajouter une zone' pour commencer."
+            style={{ padding: '40px 0' }}
+          />
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 16,
+              padding: '12px 0',
+              minHeight: '120px',
+              width: '100%'
+            }}
+          >
+            {selected.map((cardKey, index) => {
+              const { type, zone } = parseCardKey(cardKey);
+              const zoneLabel = zone || 'Général';
+              const isActive = index === currentSlideIndex;
+
+              // Equipment type icons
+              const typeIcons = {
+                'Aero': '🌡️',
+                'Clim': '❄️',
+                'Rooftop': '🏢',
+                'Eclairage': '💡'
+              };
+
+              // Zone colors
+              const zoneColors = {
+                'surface_de_vente': { bg: '#e6f7ff', border: '#1890ff', text: '#0050b3' },
+                'bureau': { bg: '#f9f0ff', border: '#722ed1', text: '#531dab' },
+                'entrepot': { bg: '#fff1f0', border: '#f5222d', text: '#cf1322' },
+                'accueil': { bg: '#fffbe6', border: '#faad14', text: '#d48806' },
+                'default': { bg: '#f5f5f5', border: '#d9d9d9', text: '#595959' }
+              };
+
+              const zoneColor = zoneColors[zone] || zoneColors['default'];
+
+              return (
+                <Card
+                  key={cardKey}
+                  size="small"
+                  hoverable
+                  onClick={() => {
+                    setCurrentSlideIndex(index);
+                  }}
+                  style={{
+                    backgroundColor: isActive ? '#e6f4ff' : '#ffffff',
+                    border: isActive ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    minHeight: '100px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: isActive ? '0 4px 12px rgba(24, 144, 255, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
+                    transform: 'scale(1)',
+                  }}
+                  bodyStyle={{ flex: 1, display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.12)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.06)';
+                    }
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    width: '100%'
+                  }}>
+                    <Space direction="vertical" size={8} style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Typography.Text strong style={{ fontSize: 16 }}>
+                          <span style={{ marginRight: 8 }}>{typeIcons[type] || '📦'}</span>
+                          {type}
+                        </Typography.Text>
+                        <Badge
+                          count={getEquipmentCount(cardKey)}
+                          showZero
+                          style={{
+                            backgroundColor: getEquipmentCount(cardKey) > 0 ? '#52c41a' : '#d9d9d9'
+                          }}
+                        />
+                      </div>
+                      <Tag
+                        style={{
+                          margin: 0,
+                          fontSize: 13,
+                          padding: '4px 12px',
+                          fontWeight: 500,
+                          backgroundColor: zoneColor.bg,
+                          borderColor: zoneColor.border,
+                          color: zoneColor.text
+                        }}
+                      >
+                        {zoneLabel}
+                      </Tag>
+                    </Space>
+
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveZoneCard(cardKey);
+                      }}
+                      style={{ marginLeft: 8 }}
+                    />
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </Form.Item>
+
+      {selected.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 16,
+            borderTop: '1px solid #f0f0f0',
+            paddingTop: 20,
+            paddingBottom: 4,
+            marginBottom: -8,
+          }}
+        >
+          <Button
+            size="middle"
+            type={currentSlideIndex === 0 ? 'default' : 'primary'}
+            ghost={currentSlideIndex !== 0}
+            onClick={() => setCurrentSlideIndex((i) => Math.max(i - 1, 0))}
+            disabled={currentSlideIndex === 0}
+            style={{
+              borderRadius: 8,
+              fontWeight: 500,
+              minWidth: 110,
+            }}
+          >
+            ⬅️ Précédent
+          </Button>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '6px 16px',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%)',
+            borderRadius: 24,
+            boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.08)',
+          }}>
+            {selected.map((_, index) => (
+              <div
+                key={index}
+                onClick={() => setCurrentSlideIndex(index)}
+                style={{
+                  width: index === currentSlideIndex ? 28 : 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: index === currentSlideIndex ? '#1890ff' : '#bfbfbf',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: index === currentSlideIndex ? '0 2px 4px rgba(24, 144, 255, 0.3)' : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  if (index !== currentSlideIndex) {
+                    e.currentTarget.style.backgroundColor = '#8c8c8c';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (index !== currentSlideIndex) {
+                    e.currentTarget.style.backgroundColor = '#bfbfbf';
+                  }
+                }}
+                title={`Carte ${index + 1} / ${selected.length}`}
+              />
+            ))}
+          </div>
+
+          <Button
+            size="middle"
+            type={currentSlideIndex === selected.length - 1 ? 'default' : 'primary'}
+            ghost={currentSlideIndex !== selected.length - 1}
+            onClick={() =>
+              setCurrentSlideIndex((i) => Math.min(i + 1, selected.length - 1))
+            }
+            disabled={currentSlideIndex === selected.length - 1}
+            style={{
+              borderRadius: 8,
+              fontWeight: 500,
+              minWidth: 110,
+            }}
+          >
+            Suivant ➡️
+          </Button>
+        </div>
+      )}
+    </Form>
+  </Space>
+</FormCard>
+{selected.length === 0 ? (
+  <Empty description="Aucune sélection" style={{ marginTop: 6 }} />
+) : (
+  <div
+    style={{
+      marginTop: 32,
+      animation: 'fadeInSlide 0.4s ease-out',
+    }}
+  >
+    {selected[currentSlideIndex] && (
+      <EditableCard
+        key={selected[currentSlideIndex]}
+        title={getCardLabel(
+          parseCardKey(selected[currentSlideIndex]).type,
+          parseCardKey(selected[currentSlideIndex]).zone
+        )}
+        cardKey={selected[currentSlideIndex]}
+        {...(data[selected[currentSlideIndex]] || {})}
+        onChange={(val) => handleCardChange(selected[currentSlideIndex], val)}
+      />
+    )}
+  </div>
+)}
+
+{/* ============================================ */}
+{/* COMPTAGE SECTION - SECOND CARD SYSTEM */}
+{/* ============================================ */}
+
+<FormCard
+  style={{
+    padding: LAYOUT_CONSTANTS.PADDING.CARD,
+    backgroundColor: '#ffffff',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+    borderRadius: 8,
+    marginTop: 40
+  }}
+  bordered={false}
+>
+  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+    {/* Comptage Header */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Typography.Title level={4} style={{ margin: 0 }}>
+        📊 Comptage
+      </Typography.Title>
+    </div>
+
+    {/* No card selection - directly show both forms */}
+  </Space>
+</FormCard>
+
+{/* Comptage EditableCard Display - Show both cards directly */}
+{selectedComptage.length > 0 && (
+  <div style={{ marginTop: 24 }}>
+    {selectedComptage.map((cardKey) => (
+      <EditableCard
+        key={cardKey}
+        title={getCardLabel(
+          parseCardKey(cardKey).type,
+          parseCardKey(cardKey).zone
+        )}
+        cardKey={cardKey}
+        {...(dataComptage[cardKey] || {})}
+        onChange={(val) => handleCardChangeComptage(cardKey, val)}
+      />
+    ))}
+  </div>
+)}
+
+{/* Zone Management Modal - Equipment only */}
+<ZoneManagementModal
+  visible={zoneModalVisible}
+  onClose={() => setZoneModalVisible(false)}
+  onAddCard={handleAddZoneCard}
+  onRemoveCard={handleRemoveZoneCard}
+  existingCards={selected}
+/>
+
+<ActionButtons
+  buttons={[
+    {
+      type: 'primary',
+      onClick: handleSubmit,
+      loading: isSubmitting,
+      disabled: isSubmitting, // Allow saving even with 0 cards to clear DB
+      children: isSubmitting ? 'Sauvegarde...' : '💾 Enregistrer les données'
+    },
+    {
+      danger: true,
+      onClick: () => {
+        try {
+          localStorage.removeItem('selectedOptions');
+          localStorage.removeItem('editableData');
+          localStorage.removeItem('selectedComptage');
+          localStorage.removeItem('editableDataComptage');
+          setSelected([]);
+          setData({});
+          setSelectedComptage([]);
+          setDataComptage({});
+          setCurrentSlideIndex(0);
+          setCurrentComptageIndex(0);
+          form.resetFields();
+          message.info('Page réinitialisée');
+          setTimeout(() => window.location.reload(), 500);
+        } catch (error) {
+          console.error('Reset error:', error);
+          message.error('Erreur lors de la réinitialisation');
+        }
+      },
+      children: '🗑️ Réinitialiser cette page'
+    }
+  ]}
+/>
+
+  </PageLayout>
+);
+}
+
+export default EquipmentPage;
