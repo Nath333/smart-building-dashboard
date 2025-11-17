@@ -1,101 +1,80 @@
-import type { BuildingData, EnergyData, TemperatureData } from '../types';
+import type { BuildingData, EnergyData } from '../types';
 
-// Mock data generator - replace with real API calls later
+// API client for backend data service
 export class BuildingDataService {
-  private static generateEnergyHistory(): EnergyData[] {
-    const data: EnergyData[] = [];
-    const now = new Date();
+  private static readonly API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-    for (let i = 23; i >= 0; i--) {
-      const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
-      data.push({
-        timestamp: timestamp.toISOString(),
-        consumption: Math.random() * 50 + 100, // 100-150 kWh
-        realTime: Math.random() * 5000 + 3000, // 3000-8000 watts
+  private static async fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    try {
+      const response = await fetch(`${this.API_URL}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        ...options,
       });
-    }
 
-    return data;
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Convert date strings to Date objects
+      return this.convertDates(data);
+    } catch (error) {
+      console.error(`Failed to fetch ${endpoint}:`, error);
+      throw error;
+    }
   }
 
-  private static generateTemperatureHistory(): TemperatureData[] {
-    const data: TemperatureData[] = [];
-    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  private static convertDates(obj: any): any {
+    if (obj === null || obj === undefined) return obj;
 
-    for (let i = 0; i < 7; i++) {
-      data.push({
-        date: days[i],
-        indoor: Math.random() * 4 + 20, // 20-24°C
-        outdoor: Math.random() * 10 + 10, // 10-20°C
-      });
+    if (typeof obj === 'string') {
+      // Check if string is an ISO date
+      const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+      if (dateRegex.test(obj)) {
+        return new Date(obj);
+      }
+      return obj;
     }
 
-    return data;
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.convertDates(item));
+    }
+
+    if (typeof obj === 'object') {
+      const converted: any = {};
+      for (const key in obj) {
+        if (key === 'lastUpdated' || key === 'lastSeen') {
+          converted[key] = new Date(obj[key]);
+        } else {
+          converted[key] = this.convertDates(obj[key]);
+        }
+      }
+      return converted;
+    }
+
+    return obj;
   }
 
   static async fetchBuildingData(): Promise<BuildingData> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const isOnline = Math.random() > 0.1; // 90% online
-
-    return {
-      status: {
-        isOnline,
-        lastUpdated: new Date(),
-      },
-      energy: {
-        realTime: Math.random() * 5000 + 3000,
-        historical: this.generateEnergyHistory(),
-      },
-      temperature: this.generateTemperatureHistory(),
-      environmental: {
-        humidity: Math.random() * 20 + 40, // 40-60%
-        co2Level: Math.random() * 400 + 400, // 400-800 ppm
-        airQuality: Math.random() > 0.7 ? 'good' : Math.random() > 0.3 ? 'moderate' : 'poor',
-      },
-      devices: [
-        {
-          id: '1',
-          name: 'Système CVC',
-          type: 'Contrôle Climatique',
-          isConnected: isOnline,
-          lastSeen: new Date(),
-        },
-        {
-          id: '2',
-          name: 'Système d\'Éclairage',
-          type: 'Éclairage',
-          isConnected: isOnline,
-          lastSeen: new Date(),
-        },
-        {
-          id: '3',
-          name: 'Système de Sécurité',
-          type: 'Sécurité',
-          isConnected: isOnline,
-          lastSeen: new Date(),
-        },
-        {
-          id: '4',
-          name: 'Compteur d\'Énergie',
-          type: 'Surveillance',
-          isConnected: isOnline,
-          lastSeen: new Date(),
-        },
-      ],
-    };
+    return this.fetchAPI<BuildingData>('/building/data');
   }
 
-  // Future API integration points
   static async updateDeviceStatus(deviceId: string, status: boolean): Promise<void> {
-    // TODO: Implement API call
-    console.log(`Updating device ${deviceId} to ${status}`);
+    await this.fetchAPI(`/building/devices/${deviceId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isConnected: status }),
+    });
   }
 
   static async getHistoricalData(startDate: Date, endDate: Date): Promise<EnergyData[]> {
-    // TODO: Implement API call
-    console.log(`Fetching data from ${startDate} to ${endDate}`);
-    return this.generateEnergyHistory();
+    // Include date range as query parameters
+    const params = new URLSearchParams({
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+    });
+    return this.fetchAPI<EnergyData[]>(`/building/energy/history?${params}`);
   }
 }
