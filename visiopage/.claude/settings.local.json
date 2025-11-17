@@ -6,7 +6,12 @@
       "Bash(echo:*)",
       "Bash(DUPLICATION_ANALYSIS.txt)",
       "Bash(cat:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git log:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git rev-parse:*)"
     ],
     "deny": [],
     "ask": []

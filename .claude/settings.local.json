@@ -1,11 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(robocopy:*)",
-      "Bash(powershell -Command:*)",
+      "Bash(npm create:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Weather XML API Dashboard\n\n- Implemented complete weather data to XML conversion flow\n- Created Express backend server with API endpoints\n- Built React frontend with modern UI components\n- Added temperature fetching from Open-Meteo API\n- Integrated sunrise/sunset data from Sunrise-Sunset API\n- Implemented JSON to XML conversion utility\n- Added location input with preset cities\n- Created weather card display component\n- Built XML viewer with syntax highlighting\n- Included copy and download functionality\n- Added comprehensive documentation\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git config:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git commit:*)",
       "Bash(npm install:*)",
-      "Bash(npm run dev:*)",
-      "Bash(git add:*)"
+      "Bash(mkdir:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
