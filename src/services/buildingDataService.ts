@@ -1,29 +1,57 @@
-import type { BuildingData, EnergyData } from '../types';
+import type { BuildingData, EnergyData, ApiResponse } from '../types';
+import { Config } from '../../shared/config';
 
-// API client for backend data service
+/**
+ * API client for backend data service
+ * Handles all communication with the backend REST API
+ */
 export class BuildingDataService {
-  private static readonly API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  private static readonly API_URL = import.meta.env.VITE_API_URL || Config.API.DEFAULT_URL;
 
+  /**
+   * Fetch data from API with error handling and type conversion
+   */
   private static async fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), Config.API.TIMEOUT);
+
     try {
       const response = await fetch(`${this.API_URL}${endpoint}`, {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         ...options,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `API error: ${response.status} ${response.statusText}`
+        );
       }
 
-      const data = await response.json();
+      const result: ApiResponse<T> = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'API request failed');
+      }
 
       // Convert date strings to Date objects
-      return this.convertDates(data);
+      return this.convertDates(result.data as T);
     } catch (error) {
-      console.error(`Failed to fetch ${endpoint}:`, error);
-      throw error;
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error(`Request timeout after ${Config.API.TIMEOUT}ms`);
+        }
+        console.error(`Failed to fetch ${endpoint}:`, error.message);
+        throw error;
+      }
+      throw new Error('Unknown error occurred');
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

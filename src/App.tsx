@@ -12,16 +12,20 @@ import './App.css';
 function App() {
   const [buildingData, setBuildingData] = useState<BuildingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const fetchData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await BuildingDataService.fetchBuildingData();
       setBuildingData(data);
       setLastRefresh(new Date());
     } catch (error) {
-      console.error('Failed to fetch building data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      setError(errorMessage);
+      console.error('Failed to fetch building data:', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -34,6 +38,7 @@ function App() {
     const interval = setInterval(fetchData, 30000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading && !buildingData) {
@@ -45,12 +50,13 @@ function App() {
     );
   }
 
-  if (!buildingData) {
+  if (!buildingData || error) {
     return (
       <div className="error-container">
         <p>Échec du chargement des données du bâtiment</p>
-        <button onClick={fetchData} className="retry-button">
-          Réessayer
+        {error && <p className="error-message">{error}</p>}
+        <button onClick={fetchData} className="retry-button" disabled={loading}>
+          {loading ? 'Chargement...' : 'Réessayer'}
         </button>
       </div>
     );
