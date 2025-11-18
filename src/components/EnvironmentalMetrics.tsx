@@ -1,48 +1,53 @@
 import { Droplets, Wind, Activity } from 'lucide-react';
-import type { EnvironmentalData } from '../types';
+import type { EnvironmentalData, AirQuality } from '../types';
+import { memo } from 'react';
 
 interface EnvironmentalMetricsProps {
   data: EnvironmentalData;
 }
 
-export function EnvironmentalMetrics({ data }: EnvironmentalMetricsProps) {
-  const getAirQualityColor = (quality: string) => {
-    switch (quality) {
-      case 'good':
-        return '#22c55e';
-      case 'moderate':
-        return '#f59e0b';
-      case 'poor':
-        return '#ef4444';
-      default:
-        return '#6b7280';
-    }
-  };
+// Helper functions moved outside component for performance
+const getAirQualityColor = (quality: AirQuality): string => {
+  switch (quality) {
+    case 'good':
+      return '#22c55e';
+    case 'moderate':
+      return '#f59e0b';
+    case 'poor':
+      return '#ef4444';
+    default:
+      return '#6b7280';
+  }
+};
 
-  const getHumidityStatus = (humidity: number) => {
-    if (humidity < 30) return 'Faible';
-    if (humidity > 60) return 'Élevé';
-    return 'Optimal';
-  };
+const getHumidityStatus = (humidity: number): string => {
+  if (humidity < 30) return 'Faible';
+  if (humidity > 60) return 'Élevé';
+  return 'Optimal';
+};
 
-  const getCO2Status = (co2: number) => {
-    if (co2 < 600) return 'Excellent';
-    if (co2 < 800) return 'Bon';
-    return 'Moyen';
-  };
+const getCO2Status = (co2: number): string => {
+  if (co2 < 600) return 'Excellent';
+  if (co2 < 800) return 'Bon';
+  return 'Moyen';
+};
 
-  const getAirQualityLabel = (quality: string) => {
-    switch (quality) {
-      case 'good':
-        return 'Bon';
-      case 'moderate':
-        return 'Modéré';
-      case 'poor':
-        return 'Mauvais';
-      default:
-        return quality;
-    }
-  };
+const getAirQualityLabel = (quality: AirQuality): string => {
+  switch (quality) {
+    case 'good':
+      return 'Bon';
+    case 'moderate':
+      return 'Modéré';
+    case 'poor':
+      return 'Mauvais';
+    default:
+      return quality;
+  }
+};
+
+function EnvironmentalMetricsComponent({ data }: EnvironmentalMetricsProps) {
+  const airQualityColor = getAirQualityColor(data.airQuality);
+  const airQualityBg = `${airQualityColor}20`;
 
   return (
     <div className="environmental-grid">
@@ -69,12 +74,12 @@ export function EnvironmentalMetrics({ data }: EnvironmentalMetricsProps) {
       </div>
 
       <div className="metric-card">
-        <div className="metric-icon" style={{ backgroundColor: getAirQualityColor(data.airQuality) + '20' }}>
-          <Activity size={24} color={getAirQualityColor(data.airQuality)} />
+        <div className="metric-icon" style={{ backgroundColor: airQualityBg }}>
+          <Activity size={24} color={airQualityColor} />
         </div>
         <div className="metric-content">
           <h4>Qualité de l'Air</h4>
-          <p className="metric-value" style={{ color: getAirQualityColor(data.airQuality) }}>
+          <p className="metric-value" style={{ color: airQualityColor }}>
             {getAirQualityLabel(data.airQuality)}
           </p>
           <p className="metric-status">Évaluation globale</p>
@@ -83,3 +88,6 @@ export function EnvironmentalMetrics({ data }: EnvironmentalMetricsProps) {
     </div>
   );
 }
+
+// Export memoized version for performance
+export const EnvironmentalMetrics = memo(EnvironmentalMetricsComponent);

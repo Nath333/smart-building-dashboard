@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { BuildingDataService } from '../services/buildingDataService';
 import { logger } from '../utils/logger';
 import { validators, ValidationError } from '../utils/validators';
@@ -8,7 +8,9 @@ const router = Router();
 /**
  * Error handler wrapper for async routes
  */
-const asyncHandler = (fn: Function) => (req: Request, res: Response, next: any) => {
+type AsyncRouteHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+
+const asyncHandler = (fn: AsyncRouteHandler) => (req: Request, res: Response, next: NextFunction) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 

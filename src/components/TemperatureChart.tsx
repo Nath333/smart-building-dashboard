@@ -1,20 +1,29 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Thermometer } from 'lucide-react';
 import type { TemperatureData } from '../types';
+import { useMemo, memo } from 'react';
 
 interface TemperatureChartProps {
   data: TemperatureData[];
 }
 
-export function TemperatureChart({ data }: TemperatureChartProps) {
-  const formattedData = data.map(item => ({
-    ...item,
-    indoor: Math.round(item.indoor * 10) / 10,
-    outdoor: Math.round(item.outdoor * 10) / 10,
-  }));
+function TemperatureChartComponent({ data }: TemperatureChartProps) {
+  // Memoize formatted data to avoid recalculation on every render
+  const formattedData = useMemo(() => {
+    return data.map(item => ({
+      ...item,
+      indoor: Math.round(item.indoor * 10) / 10,
+      outdoor: Math.round(item.outdoor * 10) / 10,
+    }));
+  }, [data]);
 
-  const currentIndoor = formattedData[formattedData.length - 1]?.indoor || 0;
-  const currentOutdoor = formattedData[formattedData.length - 1]?.outdoor || 0;
+  const currentIndoor = useMemo(() => {
+    return formattedData[formattedData.length - 1]?.indoor || 0;
+  }, [formattedData]);
+
+  const currentOutdoor = useMemo(() => {
+    return formattedData[formattedData.length - 1]?.outdoor || 0;
+  }, [formattedData]);
 
   return (
     <div className="chart-card">
@@ -77,3 +86,6 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
     </div>
   );
 }
+
+// Export memoized version for performance
+export const TemperatureChart = memo(TemperatureChartComponent);

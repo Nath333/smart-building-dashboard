@@ -27,7 +27,7 @@ export const validators = {
   /**
    * Validate boolean value
    */
-  isBoolean(value: any): boolean {
+  isBoolean(value: unknown): value is boolean {
     return typeof value === 'boolean';
   },
 };
