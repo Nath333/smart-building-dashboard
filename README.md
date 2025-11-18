@@ -15,28 +15,58 @@ A modern, responsive dashboard for monitoring and managing smart building metric
 ## Tech Stack
 
 ### Frontend
-- **React 19** with **TypeScript** for type-safe development
+- **React 19** with modern **JavaScript (ES2020+)**
 - **Vite** for fast build tooling and hot module replacement
 - **Recharts** for interactive data visualizations
 - **Lucide React** for modern icon components
 - **CSS3** with custom properties for theming
+- **Mock data fallback** for frontend-only demos (GitHub Pages)
 
-### Backend
+### Backend (Optional)
 - **Node.js** with **Express** for REST API
-- **TypeScript** for type safety across the stack
+- **JavaScript (ES Modules)** with JSDoc for documentation
 - **CORS** enabled for cross-origin requests
+
+### Deployment
+- **GitHub Actions** for automatic deployment
+- **GitHub Pages** for hosting frontend demo
+- **Automatic fallback** to mock data when backend unavailable
 
 ## Getting Started
 
-### Prerequisites
+### Quick Start (View Live Demo)
+
+**👉 Live Demo**: https://Nath333.github.io/smart-building-dashboard/
+
+The live demo uses mock data - perfect for exploring features without backend setup!
+
+### Local Development
+
+#### Prerequisites
 
 - Node.js 18+ and npm
 
-### Installation
+#### Option 1: Frontend Only (Mock Data)
+
+Perfect for testing UI without backend setup:
+
+```bash
+# Install dependencies
+npm install
+
+# Start frontend development server
+npm run dev
+```
+
+Open `http://localhost:5173` - automatically uses mock data!
+
+#### Option 2: Full-Stack Development (With Backend)
+
+For real API integration:
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Nath333/smart-building-dashboard.git
 cd smart-building-dashboard
 ```
 
@@ -45,9 +75,10 @@ cd smart-building-dashboard
 npm install
 ```
 
-3. Configure environment variables:
+3. Configure environment (optional):
 ```bash
 cp .env.example .env
+# Edit .env if needed - defaults work fine!
 ```
 
 4. Start both frontend and backend servers:
@@ -72,60 +103,71 @@ The backend API will be running on `http://localhost:3001`
 
 ```
 smart-building-dashboard/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml       # GitHub Actions deployment workflow
 ├── shared/                  # Shared code between frontend & backend
-│   ├── types.ts             # TypeScript type definitions
-│   └── config.ts            # Shared configuration constants
+│   ├── types.js             # JSDoc type definitions
+│   └── config.js            # Shared configuration constants
 ├── src/                     # Frontend source code
 │   ├── components/          # React components
-│   │   ├── StatusIndicator.tsx
-│   │   ├── EnergyChart.tsx
-│   │   ├── TemperatureChart.tsx
-│   │   ├── EnvironmentalMetrics.tsx
-│   │   └── DeviceList.tsx
-│   ├── services/            # Frontend API client
-│   │   └── buildingDataService.ts
-│   ├── types/               # Re-exports from shared types
-│   │   └── index.ts
-│   ├── App.tsx              # Main application component
+│   │   ├── StatusIndicator.jsx
+│   │   ├── EnergyChart.jsx
+│   │   ├── TemperatureChart.jsx
+│   │   ├── EnvironmentalMetrics.jsx
+│   │   └── DeviceList.jsx
+│   ├── services/            # Frontend services
+│   │   ├── buildingDataService.js  # API client
+│   │   └── mockDataService.js      # Mock data generator
+│   ├── App.jsx              # Main application component
 │   ├── App.css              # Application styles
-│   └── main.tsx             # Application entry point
-├── backend/                 # Backend source code
-│   ├── server.ts            # Express server setup
+│   └── main.jsx             # Application entry point
+├── backend/                 # Backend source code (optional)
+│   ├── server.js            # Express server setup
 │   ├── routes/              # API routes
-│   │   └── building.ts      # Building data endpoints
+│   │   └── building.js      # Building data endpoints
 │   ├── services/            # Backend business logic
-│   │   └── buildingDataService.ts
-│   ├── utils/               # Backend utilities
-│   │   ├── logger.ts        # Logging system
-│   │   └── validators.ts    # Request validation
-│   └── tsconfig.json        # Backend TypeScript config
+│   │   └── buildingDataService.js
+│   └── utils/               # Backend utilities
+│       ├── logger.js        # Logging system
+│       └── validators.js    # Request validation
+├── public/
+│   └── .nojekyll            # GitHub Pages configuration
 ├── .env                     # Environment variables (not in git)
 ├── .env.example             # Environment variables template
 ├── package.json
+├── vite.config.js           # Vite configuration
 └── README.md
 ```
 
 ## Architecture
 
-This application follows a **full-stack architecture** with a clear separation between frontend and backend:
+This application follows a **modern full-stack architecture** with intelligent fallback support:
 
 ### Shared Layer
-- **Single Source of Truth**: Types and configuration defined once, used everywhere
-- **Type Safety**: Full TypeScript coverage across the entire stack
+- **Single Source of Truth**: Configuration defined once, used everywhere
+- **JSDoc Documentation**: Clear type hints for better DX
 - **No Duplication**: Eliminates inconsistencies between frontend and backend
 
 ### Frontend (React + Vite)
 - Handles UI rendering and user interactions
-- Fetches data from the backend REST API
+- **Smart Data Source**: Tries backend API first, falls back to mock data
 - Auto-refreshes every 30 seconds
-- Runs on `http://localhost:5173`
+- Runs on `http://localhost:5173` (dev) or GitHub Pages (prod)
+- **Works standalone** without backend (perfect for demos!)
 
-### Backend (Node.js + Express)
+### Backend (Node.js + Express) - Optional
 - Provides REST API endpoints for building data
 - Generates realistic mock data (ready to be replaced with real sensors/databases)
 - Handles CORS for frontend communication
 - Professional logging and request validation
 - Runs on `http://localhost:3001`
+
+### Deployment Architecture
+- **GitHub Actions**: Automated build and deployment
+- **GitHub Pages**: Hosts frontend static files
+- **Mock Data Fallback**: App works without backend
+- **Environment Detection**: Automatically adapts to available resources
 
 ### API Endpoints
 
@@ -155,18 +197,45 @@ static async getBuildingData(): Promise<BuildingData> {
 ## Available Scripts
 
 ### Development
-- `npm run dev` - Start frontend development server only
-- `npm run dev:backend` - Start backend server with auto-reload
+- `npm run dev` - Start frontend dev server (auto-uses mock data if no backend)
+- `npm run dev:backend` - Start backend server
 - `npm run dev:fullstack` - Start both frontend and backend concurrently
 
-### Production
+### Production & Deployment
 - `npm run build` - Build frontend for production
-- `npm run build:backend` - Compile backend TypeScript to JavaScript
-- `npm run start:backend` - Start production backend server
-- `npm run preview` - Preview frontend production build
+- `npm run start:backend` - Start backend server (production)
+- `npm run preview` - Preview frontend production build locally
 
 ### Code Quality
 - `npm run lint` - Run ESLint
+
+## Deployment to GitHub Pages
+
+The app automatically deploys to GitHub Pages when you push to `main` or any `claude/*` branch!
+
+### Setup (One-Time)
+
+1. Go to your GitHub repository settings
+2. Navigate to **Pages** in the left sidebar
+3. Under **Source**, select **GitHub Actions**
+4. That's it! The workflow will handle everything else
+
+### How It Works
+
+1. **Push Code**: Push to `main` or `claude/*` branch
+2. **GitHub Actions**: Automatically builds the app
+3. **Deploy**: Publishes to GitHub Pages
+4. **Live**: Available at `https://Nath333.github.io/smart-building-dashboard/`
+
+### Branch Organization
+
+- **`main`**: Production-ready code, deploys to GitHub Pages
+- **`claude/javascript-gh-pages-*`**: Feature branch with all latest improvements
+- **Workflow**: Merge feature branches to `main` via Pull Requests
+
+### Manual Deployment Trigger
+
+You can manually trigger deployment from the GitHub Actions tab if needed.
 
 ## Customization
 
@@ -186,11 +255,24 @@ Edit CSS custom properties in `src/App.css`:
 
 ### Refresh Interval
 
-Change auto-refresh interval in `src/App.tsx`:
+Change auto-refresh interval in `src/App.jsx`:
 
-```typescript
+```javascript
 // Auto-refresh every 30 seconds (30000ms)
 const interval = setInterval(fetchData, 30000);
+```
+
+### Mock Data Configuration
+
+Customize mock data generation in `src/services/mockDataService.js`:
+
+```javascript
+// Adjust data ranges, patterns, or add new metrics
+export class MockDataService {
+  static generateMockData() {
+    // Your custom data generation logic
+  }
+}
 ```
 
 ## Future Enhancements
