@@ -24,6 +24,11 @@ export const CHART_CONFIG = {
   TICK_FONT_SIZE: 12,
   STROKE_WIDTH: 2,
   GRID_DASH: '3 3',
+
+  // Tooltip styling
+  TOOLTIP_BG: '#fff',
+  TOOLTIP_BORDER: '1px solid #ccc',
+  TOOLTIP_RADIUS: '8px',
 };
 
 /**
@@ -84,6 +89,20 @@ export const ENVIRONMENTAL_LABELS = {
     EXCELLENT: 'Excellent',
     GOOD: 'Bon',
     MODERATE: 'Moyen',
+  },
+};
+
+/**
+ * Environmental metric styling
+ */
+export const ENVIRONMENTAL_COLORS = {
+  HUMIDITY: {
+    BG: '#e0f2fe',
+    ICON: '#0284c7',
+  },
+  CO2: {
+    BG: '#fef3c7',
+    ICON: '#d97706',
   },
 };
 

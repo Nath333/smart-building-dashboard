@@ -63,9 +63,9 @@ function TemperatureChartComponent({ data }) {
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #ccc',
-              borderRadius: '8px'
+              backgroundColor: CHART_CONFIG.TOOLTIP_BG,
+              border: CHART_CONFIG.TOOLTIP_BORDER,
+              borderRadius: CHART_CONFIG.TOOLTIP_RADIUS
             }}
           />
           <Legend />

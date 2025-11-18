@@ -3,6 +3,8 @@
  * Generates realistic building data without backend
  */
 
+import { WEEKDAYS_FR } from '../constants.js';
+
 const DataConstants = {
   TEMPERATURE: { MIN_INDOOR: 15, MAX_INDOOR: 30, MIN_OUTDOOR: -10, MAX_OUTDOOR: 40 },
   ENERGY: { MIN_CONSUMPTION: 50, MAX_CONSUMPTION: 200 },
@@ -39,8 +41,7 @@ export class MockDataService {
     }
 
     // Generate 7-day temperature data
-    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-    const temperatureData = days.map((day, i) => {
+    const temperatureData = WEEKDAYS_FR.map((day, i) => {
       const indoorBase = 21.5;
       const indoorVariation = (Math.random() - 0.5) * 2;
       const indoor = Math.round((indoorBase + indoorVariation) * 10) / 10;

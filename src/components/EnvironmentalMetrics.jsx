@@ -4,6 +4,7 @@ import {
   AIR_QUALITY,
   ENVIRONMENTAL_THRESHOLDS,
   ENVIRONMENTAL_LABELS,
+  ENVIRONMENTAL_COLORS,
   ICON_SIZES
 } from '../constants.js';
 
@@ -43,8 +44,8 @@ function EnvironmentalMetricsComponent({ data }) {
   return (
     <div className="environmental-grid">
       <div className="metric-card">
-        <div className="metric-icon" style={{ backgroundColor: '#e0f2fe' }}>
-          <Droplets size={ICON_SIZES.MEDIUM} color="#0284c7" aria-hidden="true" />
+        <div className="metric-icon" style={{ backgroundColor: ENVIRONMENTAL_COLORS.HUMIDITY.BG }}>
+          <Droplets size={ICON_SIZES.MEDIUM} color={ENVIRONMENTAL_COLORS.HUMIDITY.ICON} aria-hidden="true" />
         </div>
         <div className="metric-content">
           <h4>Humidité</h4>
@@ -54,8 +55,8 @@ function EnvironmentalMetricsComponent({ data }) {
       </div>
 
       <div className="metric-card">
-        <div className="metric-icon" style={{ backgroundColor: '#fef3c7' }}>
-          <Wind size={ICON_SIZES.MEDIUM} color="#d97706" />
+        <div className="metric-icon" style={{ backgroundColor: ENVIRONMENTAL_COLORS.CO2.BG }}>
+          <Wind size={ICON_SIZES.MEDIUM} color={ENVIRONMENTAL_COLORS.CO2.ICON} aria-hidden="true" />
         </div>
         <div className="metric-content">
           <h4>Niveau de CO₂</h4>
@@ -66,7 +67,7 @@ function EnvironmentalMetricsComponent({ data }) {
 
       <div className="metric-card">
         <div className="metric-icon" style={{ backgroundColor: airQualityBg }}>
-          <Activity size={ICON_SIZES.MEDIUM} color={airQualityColor} />
+          <Activity size={ICON_SIZES.MEDIUM} color={airQualityColor} aria-hidden="true" />
         </div>
         <div className="metric-content">
           <h4>Qualité de l'Air</h4>
