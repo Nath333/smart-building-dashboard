@@ -8,6 +8,25 @@ import { DeviceList } from './components/DeviceList.jsx';
 import { BuildingDataService } from './services/buildingDataService.js';
 import './App.css';
 
+/**
+ * Main application component for the Smart Building Dashboard
+ *
+ * Displays real-time building metrics including:
+ * - Connection status
+ * - Energy consumption (real-time and historical)
+ * - Temperature trends (indoor/outdoor)
+ * - Environmental metrics (humidity, CO2, air quality)
+ * - Connected devices status
+ *
+ * Features:
+ * - Auto-refresh every 30 seconds
+ * - Error handling with retry functionality
+ * - Loading states
+ * - Accessibility support (ARIA labels, semantic HTML)
+ * - Automatic fallback to mock data when backend unavailable
+ *
+ * @returns {JSX.Element} The main dashboard interface
+ */
 function App() {
   const [buildingData, setBuildingData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,8 +61,8 @@ function App() {
 
   if (loading && !buildingData) {
     return (
-      <div className="loading-container">
-        <RefreshCw className="loading-spinner" size={48} />
+      <div className="loading-container" role="status" aria-live="polite">
+        <RefreshCw className="loading-spinner" size={48} aria-hidden="true" />
         <p>Chargement des données du bâtiment...</p>
       </div>
     );
@@ -51,10 +70,15 @@ function App() {
 
   if (!buildingData || error) {
     return (
-      <div className="error-container">
+      <div className="error-container" role="alert">
         <p>Échec du chargement des données du bâtiment</p>
         {error && <p className="error-message">{error}</p>}
-        <button onClick={fetchData} className="retry-button" disabled={loading}>
+        <button
+          onClick={fetchData}
+          className="retry-button"
+          disabled={loading}
+          aria-label="Réessayer le chargement des données"
+        >
           {loading ? 'Chargement...' : 'Réessayer'}
         </button>
       </div>
@@ -65,7 +89,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-left">
-          <Building2 size={32} />
+          <Building2 size={32} aria-hidden="true" />
           <div>
             <h1>Tableau de Bord du Bâtiment Intelligent</h1>
             <p className="subtitle">Surveillance et analyse en temps réel</p>
@@ -76,6 +100,7 @@ function App() {
           className="refresh-button"
           disabled={loading}
           title="Actualiser les données"
+          aria-label="Actualiser les données du tableau de bord"
         >
           <RefreshCw size={20} className={loading ? 'spinning' : ''} />
           <span>Actualiser</span>
@@ -83,11 +108,11 @@ function App() {
       </header>
 
       <main className="dashboard">
-        <section className="status-section">
+        <section className="status-section" aria-label="État de connexion du bâtiment">
           <StatusIndicator status={buildingData.status} />
         </section>
 
-        <section className="charts-section">
+        <section className="charts-section" aria-label="Graphiques de consommation">
           <EnergyChart
             data={buildingData.energy.historical}
             realTime={buildingData.energy.realTime}
@@ -95,18 +120,22 @@ function App() {
           <TemperatureChart data={buildingData.temperature} />
         </section>
 
-        <section className="metrics-section">
-          <h2>Métriques Environnementales</h2>
+        <section className="metrics-section" aria-labelledby="environmental-heading">
+          <h2 id="environmental-heading">Métriques Environnementales</h2>
           <EnvironmentalMetrics data={buildingData.environmental} />
         </section>
 
-        <section className="devices-section">
+        <section className="devices-section" aria-label="Liste des appareils connectés">
           <DeviceList devices={buildingData.devices} />
         </section>
       </main>
 
-      <footer className="app-footer">
-        <p>Dernière mise à jour : {lastRefresh.toLocaleTimeString('fr-FR')}</p>
+      <footer className="app-footer" role="contentinfo">
+        <p>
+          <time dateTime={lastRefresh.toISOString()}>
+            Dernière mise à jour : {lastRefresh.toLocaleTimeString('fr-FR')}
+          </time>
+        </p>
       </footer>
     </div>
   );
