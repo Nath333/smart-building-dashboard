@@ -1,7 +1,16 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Thermometer } from 'lucide-react';
 import { useMemo, memo } from 'react';
+import { CHART_CONFIG, ICON_SIZES } from '../constants.js';
 
+/**
+ * Temperature trends chart component
+ * Displays 7-day indoor/outdoor temperature comparison
+ *
+ * @param {Object} props - Component props
+ * @param {Array} props.data - Weekly temperature data
+ * @returns {JSX.Element} Temperature area chart
+ */
 function TemperatureChartComponent({ data }) {
   // Memoize formatted data to avoid recalculation on every render
   const formattedData = useMemo(() => {
@@ -24,7 +33,7 @@ function TemperatureChartComponent({ data }) {
     <div className="chart-card">
       <div className="card-header">
         <div className="header-content">
-          <Thermometer size={24} className="header-icon" />
+          <Thermometer size={ICON_SIZES.MEDIUM} className="header-icon" aria-hidden="true" />
           <h3>Tendances de Température</h3>
         </div>
         <div className="temperature-display">
@@ -39,17 +48,17 @@ function TemperatureChartComponent({ data }) {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width={CHART_CONFIG.RESPONSIVE_WIDTH} height={CHART_CONFIG.DEFAULT_HEIGHT}>
         <AreaChart data={formattedData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <CartesianGrid strokeDasharray={CHART_CONFIG.GRID_DASH} stroke={CHART_CONFIG.GRID_STROKE} />
           <XAxis
             dataKey="date"
-            stroke="#666"
-            tick={{ fontSize: 12 }}
+            stroke={CHART_CONFIG.AXIS_STROKE}
+            tick={{ fontSize: CHART_CONFIG.TICK_FONT_SIZE }}
           />
           <YAxis
-            stroke="#666"
-            tick={{ fontSize: 12 }}
+            stroke={CHART_CONFIG.AXIS_STROKE}
+            tick={{ fontSize: CHART_CONFIG.TICK_FONT_SIZE }}
             label={{ value: '°C', angle: -90, position: 'insideLeft' }}
           />
           <Tooltip
@@ -63,17 +72,17 @@ function TemperatureChartComponent({ data }) {
           <Area
             type="monotone"
             dataKey="indoor"
-            stroke="#ef4444"
-            fill="#fecaca"
-            strokeWidth={2}
+            stroke={CHART_CONFIG.INDOOR_TEMP}
+            fill={CHART_CONFIG.INDOOR_FILL}
+            strokeWidth={CHART_CONFIG.STROKE_WIDTH}
             name="Intérieur (°C)"
           />
           <Area
             type="monotone"
             dataKey="outdoor"
-            stroke="#3b82f6"
-            fill="#bfdbfe"
-            strokeWidth={2}
+            stroke={CHART_CONFIG.OUTDOOR_TEMP}
+            fill={CHART_CONFIG.OUTDOOR_FILL}
+            strokeWidth={CHART_CONFIG.STROKE_WIDTH}
             name="Extérieur (°C)"
           />
         </AreaChart>

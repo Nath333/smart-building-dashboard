@@ -1,5 +1,18 @@
 import { CheckCircle, XCircle } from 'lucide-react';
+import { ICON_SIZES } from '../constants.js';
 
+/**
+ * Connected devices list component
+ * Displays all connected devices with their connection status
+ *
+ * @param {Object} props - Component props
+ * @param {Array} props.devices - Array of device objects
+ * @param {string} props.devices[].id - Unique device identifier
+ * @param {string} props.devices[].name - Device name
+ * @param {string} props.devices[].type - Device type description
+ * @param {boolean} props.devices[].isConnected - Device connection status
+ * @returns {JSX.Element} Device list card
+ */
 export function DeviceList({ devices }) {
   return (
     <div className="device-list-card">
@@ -10,9 +23,9 @@ export function DeviceList({ devices }) {
             <div className="device-info">
               <div className={`device-status-icon ${device.isConnected ? 'connected' : 'disconnected'}`}>
                 {device.isConnected ? (
-                  <CheckCircle size={20} />
+                  <CheckCircle size={ICON_SIZES.SMALL} aria-hidden="true" />
                 ) : (
-                  <XCircle size={20} />
+                  <XCircle size={ICON_SIZES.SMALL} aria-hidden="true" />
                 )}
               </div>
               <div className="device-details">

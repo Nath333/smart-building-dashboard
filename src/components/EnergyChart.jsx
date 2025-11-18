@@ -1,7 +1,17 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Zap } from 'lucide-react';
 import { useMemo, memo } from 'react';
+import { CHART_CONFIG, ICON_SIZES, LOCALE } from '../constants.js';
 
+/**
+ * Energy consumption chart component
+ * Displays 24-hour historical energy data with real-time current consumption
+ *
+ * @param {Object} props - Component props
+ * @param {Array} props.data - Historical energy data (24 hours)
+ * @param {number} props.realTime - Current energy consumption in watts
+ * @returns {JSX.Element} Energy chart with line graph
+ */
 function EnergyChartComponent({ data, realTime }) {
   // Memoize formatted data to avoid recalculation on every render
   const formattedData = useMemo(() => {
@@ -12,14 +22,14 @@ function EnergyChartComponent({ data, realTime }) {
   }, [data]);
 
   const formattedRealTime = useMemo(() => {
-    return Math.round(realTime).toLocaleString('fr-FR');
+    return Math.round(realTime).toLocaleString(LOCALE.LANGUAGE);
   }, [realTime]);
 
   return (
     <div className="chart-card">
       <div className="card-header">
         <div className="header-content">
-          <Zap size={24} className="header-icon" />
+          <Zap size={ICON_SIZES.MEDIUM} className="header-icon" aria-hidden="true" />
           <h3>Consommation d'Énergie</h3>
         </div>
         <div className="realtime-display">
@@ -28,17 +38,17 @@ function EnergyChartComponent({ data, realTime }) {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width={CHART_CONFIG.RESPONSIVE_WIDTH} height={CHART_CONFIG.DEFAULT_HEIGHT}>
         <LineChart data={formattedData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <CartesianGrid strokeDasharray={CHART_CONFIG.GRID_DASH} stroke={CHART_CONFIG.GRID_STROKE} />
           <XAxis
             dataKey="time"
-            stroke="#666"
-            tick={{ fontSize: 12 }}
+            stroke={CHART_CONFIG.AXIS_STROKE}
+            tick={{ fontSize: CHART_CONFIG.TICK_FONT_SIZE }}
           />
           <YAxis
-            stroke="#666"
-            tick={{ fontSize: 12 }}
+            stroke={CHART_CONFIG.AXIS_STROKE}
+            tick={{ fontSize: CHART_CONFIG.TICK_FONT_SIZE }}
             label={{ value: 'kWh', angle: -90, position: 'insideLeft' }}
           />
           <Tooltip
@@ -52,8 +62,8 @@ function EnergyChartComponent({ data, realTime }) {
           <Line
             type="monotone"
             dataKey="consumption"
-            stroke="#2563eb"
-            strokeWidth={2}
+            stroke={CHART_CONFIG.PRIMARY_LINE}
+            strokeWidth={CHART_CONFIG.STROKE_WIDTH}
             dot={false}
             name="Énergie (kWh)"
           />

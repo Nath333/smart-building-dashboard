@@ -6,6 +6,7 @@ import { TemperatureChart } from './components/TemperatureChart.jsx';
 import { EnvironmentalMetrics } from './components/EnvironmentalMetrics.jsx';
 import { DeviceList } from './components/DeviceList.jsx';
 import { BuildingDataService } from './services/buildingDataService.js';
+import { AUTO_REFRESH, ICON_SIZES, LOCALE } from './constants.js';
 import './App.css';
 
 /**
@@ -53,7 +54,7 @@ function App() {
     fetchData();
 
     // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, AUTO_REFRESH.INTERVAL);
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,7 +63,7 @@ function App() {
   if (loading && !buildingData) {
     return (
       <div className="loading-container" role="status" aria-live="polite">
-        <RefreshCw className="loading-spinner" size={48} aria-hidden="true" />
+        <RefreshCw className="loading-spinner" size={ICON_SIZES.XLARGE} aria-hidden="true" />
         <p>Chargement des données du bâtiment...</p>
       </div>
     );
@@ -89,7 +90,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-left">
-          <Building2 size={32} aria-hidden="true" />
+          <Building2 size={ICON_SIZES.LARGE} aria-hidden="true" />
           <div>
             <h1>Tableau de Bord du Bâtiment Intelligent</h1>
             <p className="subtitle">Surveillance et analyse en temps réel</p>
@@ -102,7 +103,7 @@ function App() {
           title="Actualiser les données"
           aria-label="Actualiser les données du tableau de bord"
         >
-          <RefreshCw size={20} className={loading ? 'spinning' : ''} />
+          <RefreshCw size={ICON_SIZES.SMALL} className={loading ? 'spinning' : ''} />
           <span>Actualiser</span>
         </button>
       </header>
@@ -133,7 +134,7 @@ function App() {
       <footer className="app-footer" role="contentinfo">
         <p>
           <time dateTime={lastRefresh.toISOString()}>
-            Dernière mise à jour : {lastRefresh.toLocaleTimeString('fr-FR')}
+            Dernière mise à jour : {lastRefresh.toLocaleTimeString(LOCALE.LANGUAGE)}
           </time>
         </p>
       </footer>
