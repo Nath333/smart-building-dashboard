@@ -1,88 +1,85 @@
 import { Router, Request, Response } from 'express';
 import { BuildingDataService } from '../services/buildingDataService';
+import { logger } from '../utils/logger';
+import { validators, ValidationError } from '../utils/validators';
 
 const router = Router();
 
+/**
+ * Error handler wrapper for async routes
+ */
+const asyncHandler = (fn: Function) => (req: Request, res: Response, next: any) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 // Get complete building data
-router.get('/data', async (req: Request, res: Response) => {
-  try {
-    const data = await BuildingDataService.getBuildingData();
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch building data' });
-  }
-});
+router.get('/data', asyncHandler(async (req: Request, res: Response) => {
+  logger.info('GET /api/building/data');
+  const data = await BuildingDataService.getBuildingData();
+  res.json({ success: true, data });
+}));
 
 // Get building status
-router.get('/status', async (req: Request, res: Response) => {
-  try {
-    const status = await BuildingDataService.getBuildingStatus();
-    res.json(status);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch building status' });
-  }
-});
+router.get('/status', asyncHandler(async (req: Request, res: Response) => {
+  logger.info('GET /api/building/status');
+  const status = await BuildingDataService.getBuildingStatus();
+  res.json({ success: true, data: status });
+}));
 
 // Get energy data
-router.get('/energy/current', async (req: Request, res: Response) => {
-  try {
-    const energy = await BuildingDataService.getCurrentEnergy();
-    res.json(energy);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch current energy data' });
-  }
-});
+router.get('/energy/current', asyncHandler(async (req: Request, res: Response) => {
+  logger.info('GET /api/building/energy/current');
+  const energy = await BuildingDataService.getCurrentEnergy();
+  res.json({ success: true, data: energy });
+}));
 
 // Get historical energy data
-router.get('/energy/history', async (req: Request, res: Response) => {
-  try {
-    const history = await BuildingDataService.getEnergyHistory();
-    res.json(history);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch energy history' });
-  }
-});
+router.get('/energy/history', asyncHandler(async (req: Request, res: Response) => {
+  logger.info('GET /api/building/energy/history');
+  const history = await BuildingDataService.getEnergyHistory();
+  res.json({ success: true, data: history });
+}));
 
 // Get temperature data
-router.get('/temperature/week', async (req: Request, res: Response) => {
-  try {
-    const temperature = await BuildingDataService.getTemperatureWeek();
-    res.json(temperature);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch temperature data' });
-  }
-});
+router.get('/temperature/week', asyncHandler(async (req: Request, res: Response) => {
+  logger.info('GET /api/building/temperature/week');
+  const temperature = await BuildingDataService.getTemperatureWeek();
+  res.json({ success: true, data: temperature });
+}));
 
 // Get environmental data
-router.get('/environmental/current', async (req: Request, res: Response) => {
-  try {
-    const environmental = await BuildingDataService.getEnvironmentalData();
-    res.json(environmental);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch environmental data' });
-  }
-});
+router.get('/environmental/current', asyncHandler(async (req: Request, res: Response) => {
+  logger.info('GET /api/building/environmental/current');
+  const environmental = await BuildingDataService.getEnvironmentalData();
+  res.json({ success: true, data: environmental });
+}));
 
 // Get devices status
-router.get('/devices', async (req: Request, res: Response) => {
-  try {
-    const devices = await BuildingDataService.getDevices();
-    res.json(devices);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch devices data' });
-  }
-});
+router.get('/devices', asyncHandler(async (req: Request, res: Response) => {
+  logger.info('GET /api/building/devices');
+  const devices = await BuildingDataService.getDevices();
+  res.json({ success: true, data: devices });
+}));
 
 // Update device status
-router.patch('/devices/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { isConnected } = req.body;
-    await BuildingDataService.updateDeviceStatus(id, isConnected);
-    res.json({ success: true, message: 'Device status updated' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update device status' });
+router.patch('/devices/:id', asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { isConnected } = req.body;
+
+  logger.info(`PATCH /api/building/devices/${id}`);
+
+  // Validate device ID
+  if (!validators.isValidDeviceId(id)) {
+    throw new ValidationError('Invalid device ID format');
   }
-});
+
+  // Validate isConnected
+  if (!validators.isBoolean(isConnected)) {
+    throw new ValidationError('isConnected must be a boolean');
+  }
+
+  await BuildingDataService.updateDeviceStatus(id, isConnected);
+  res.json({ success: true, message: 'Device status updated' });
+}));
 
 export default router;
