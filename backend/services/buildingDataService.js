@@ -1,30 +1,21 @@
-import type {
-  BuildingData,
-  BuildingStatus,
-  EnergyData,
-  TemperatureData,
-  EnvironmentalData,
-  DeviceStatus,
-  AirQuality
-} from '../../shared/types';
-import { DataConstants } from '../../shared/types';
-import { logger } from '../utils/logger';
+import { DataConstants } from '../../shared/types.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Backend data service - generates realistic building data
  * In production, replace with actual IoT sensor integrations
  */
 export class BuildingDataService {
-  private static buildingOnline = true;
-  private static lastUpdated = new Date();
-  private static energyBaseline = 120; // Base consumption in kWh
+  static buildingOnline = true;
+  static lastUpdated = new Date();
+  static energyBaseline = 120; // Base consumption in kWh
 
   /**
    * Generate realistic 24-hour energy consumption history
    * Patterns: Morning peak (6-9), Business hours (9-17), Evening peak (17-22), Night low
    */
-  private static generateEnergyHistory(): EnergyData[] {
-    const data: EnergyData[] = [];
+  static generateEnergyHistory() {
+    const data = [];
     const now = new Date();
 
     for (let i = 23; i >= 0; i--) {
@@ -60,8 +51,8 @@ export class BuildingDataService {
    * Indoor: controlled climate (21-23°C)
    * Outdoor: natural variation
    */
-  private static generateTemperatureHistory(): TemperatureData[] {
-    const data: TemperatureData[] = [];
+  static generateTemperatureHistory() {
+    const data = [];
     const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
     for (let i = 0; i < 7; i++) {
@@ -89,11 +80,11 @@ export class BuildingDataService {
    * Generate current environmental metrics
    * Air quality based on CO2 levels: <600 = good, 600-800 = moderate, >800 = poor
    */
-  private static generateEnvironmentalData(): EnvironmentalData {
+  static generateEnvironmentalData() {
     const humidity = Math.round((48 + Math.random() * 8) * 10) / 10; // 48-56%
     const co2Level = Math.round(420 + Math.random() * 280); // 420-700 ppm
 
-    let airQuality: AirQuality;
+    let airQuality;
     if (co2Level < 600) airQuality = 'good';
     else if (co2Level < 800) airQuality = 'moderate';
     else airQuality = 'poor';
@@ -109,7 +100,7 @@ export class BuildingDataService {
    * Generate building device statuses
    * 95%+ uptime for critical systems
    */
-  private static generateDevices(): DeviceStatus[] {
+  static generateDevices() {
     const isOnline = this.buildingOnline;
 
     return [
@@ -145,7 +136,7 @@ export class BuildingDataService {
   }
 
   // Public API methods
-  static async getBuildingData(): Promise<BuildingData> {
+  static async getBuildingData() {
     logger.debug('Fetching complete building data');
 
     // Simulate database/sensor query delay
@@ -171,42 +162,42 @@ export class BuildingDataService {
     };
   }
 
-  static async getBuildingStatus(): Promise<BuildingStatus> {
+  static async getBuildingStatus() {
     return {
       isOnline: this.buildingOnline,
       lastUpdated: this.lastUpdated,
     };
   }
 
-  static async getCurrentEnergy(): Promise<{ realTime: number }> {
+  static async getCurrentEnergy() {
     const history = this.generateEnergyHistory();
     const latest = history[history.length - 1];
     return { realTime: latest.realTime };
   }
 
-  static async getEnergyHistory(): Promise<EnergyData[]> {
+  static async getEnergyHistory() {
     return this.generateEnergyHistory();
   }
 
-  static async getTemperatureWeek(): Promise<TemperatureData[]> {
+  static async getTemperatureWeek() {
     return this.generateTemperatureHistory();
   }
 
-  static async getEnvironmentalData(): Promise<EnvironmentalData> {
+  static async getEnvironmentalData() {
     return this.generateEnvironmentalData();
   }
 
-  static async getDevices(): Promise<DeviceStatus[]> {
+  static async getDevices() {
     return this.generateDevices();
   }
 
-  static async updateDeviceStatus(deviceId: string, status: boolean): Promise<void> {
+  static async updateDeviceStatus(deviceId, status) {
     logger.info(`Updating device ${deviceId} to ${status ? 'connected' : 'disconnected'}`);
     // In a real app, this would update the database/send command to IoT device
     await new Promise(resolve => setTimeout(resolve, 50));
   }
 
-  static async getHistoricalData(startDate: Date, endDate: Date): Promise<EnergyData[]> {
+  static async getHistoricalData(startDate, endDate) {
     // In a real app, this would query based on date range
     logger.debug(`Fetching historical data from ${startDate.toISOString()} to ${endDate.toISOString()}`);
     return this.generateEnergyHistory();

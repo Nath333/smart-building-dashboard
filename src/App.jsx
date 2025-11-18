@@ -1,19 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Building2, RefreshCw } from 'lucide-react';
-import { StatusIndicator } from './components/StatusIndicator';
-import { EnergyChart } from './components/EnergyChart';
-import { TemperatureChart } from './components/TemperatureChart';
-import { EnvironmentalMetrics } from './components/EnvironmentalMetrics';
-import { DeviceList } from './components/DeviceList';
-import { BuildingDataService } from './services/buildingDataService';
-import type { BuildingData } from './types';
+import { StatusIndicator } from './components/StatusIndicator.jsx';
+import { EnergyChart } from './components/EnergyChart.jsx';
+import { TemperatureChart } from './components/TemperatureChart.jsx';
+import { EnvironmentalMetrics } from './components/EnvironmentalMetrics.jsx';
+import { DeviceList } from './components/DeviceList.jsx';
+import { BuildingDataService } from './services/buildingDataService.js';
 import './App.css';
 
 function App() {
-  const [buildingData, setBuildingData] = useState<BuildingData | null>(null);
+  const [buildingData, setBuildingData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
   const fetchData = async () => {
     setLoading(true);

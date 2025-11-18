@@ -24,4 +24,4 @@ export const Config = {
     ENABLED: true,
     LEVEL: isProduction ? 'error' : 'debug',
   },
-} as const;
+};

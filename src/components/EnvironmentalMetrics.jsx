@@ -1,13 +1,8 @@
 import { Droplets, Wind, Activity } from 'lucide-react';
-import type { EnvironmentalData, AirQuality } from '../types';
 import { memo } from 'react';
 
-interface EnvironmentalMetricsProps {
-  data: EnvironmentalData;
-}
-
 // Helper functions moved outside component for performance
-const getAirQualityColor = (quality: AirQuality): string => {
+const getAirQualityColor = (quality) => {
   switch (quality) {
     case 'good':
       return '#22c55e';
@@ -20,19 +15,19 @@ const getAirQualityColor = (quality: AirQuality): string => {
   }
 };
 
-const getHumidityStatus = (humidity: number): string => {
+const getHumidityStatus = (humidity) => {
   if (humidity < 30) return 'Faible';
   if (humidity > 60) return 'Élevé';
   return 'Optimal';
 };
 
-const getCO2Status = (co2: number): string => {
+const getCO2Status = (co2) => {
   if (co2 < 600) return 'Excellent';
   if (co2 < 800) return 'Bon';
   return 'Moyen';
 };
 
-const getAirQualityLabel = (quality: AirQuality): string => {
+const getAirQualityLabel = (quality) => {
   switch (quality) {
     case 'good':
       return 'Bon';
@@ -45,7 +40,7 @@ const getAirQualityLabel = (quality: AirQuality): string => {
   }
 };
 
-function EnvironmentalMetricsComponent({ data }: EnvironmentalMetricsProps) {
+function EnvironmentalMetricsComponent({ data }) {
   const airQualityColor = getAirQualityColor(data.airQuality);
   const airQualityBg = `${airQualityColor}20`;
 

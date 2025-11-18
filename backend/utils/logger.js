@@ -2,12 +2,12 @@
  * Simple logger utility for backend
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
 class Logger {
-  private enabled: boolean = true;
+  constructor() {
+    this.enabled = true;
+  }
 
-  log(level: LogLevel, message: string, ...args: unknown[]) {
+  log(level, message, ...args) {
     if (!this.enabled) return;
 
     const timestamp = new Date().toISOString();
@@ -29,19 +29,19 @@ class Logger {
     }
   }
 
-  debug(message: string, ...args: unknown[]) {
+  debug(message, ...args) {
     this.log('debug', message, ...args);
   }
 
-  info(message: string, ...args: unknown[]) {
+  info(message, ...args) {
     this.log('info', message, ...args);
   }
 
-  warn(message: string, ...args: unknown[]) {
+  warn(message, ...args) {
     this.log('warn', message, ...args);
   }
 
-  error(message: string, ...args: unknown[]) {
+  error(message, ...args) {
     this.log('error', message, ...args);
   }
 }

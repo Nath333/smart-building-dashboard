@@ -1,14 +1,8 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Zap } from 'lucide-react';
-import type { EnergyData } from '../types';
 import { useMemo, memo } from 'react';
 
-interface EnergyChartProps {
-  data: EnergyData[];
-  realTime: number;
-}
-
-function EnergyChartComponent({ data, realTime }: EnergyChartProps) {
+function EnergyChartComponent({ data, realTime }) {
   // Memoize formatted data to avoid recalculation on every render
   const formattedData = useMemo(() => {
     return data.map(item => ({

@@ -1,13 +1,8 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Thermometer } from 'lucide-react';
-import type { TemperatureData } from '../types';
 import { useMemo, memo } from 'react';
 
-interface TemperatureChartProps {
-  data: TemperatureData[];
-}
-
-function TemperatureChartComponent({ data }: TemperatureChartProps) {
+function TemperatureChartComponent({ data }) {
   // Memoize formatted data to avoid recalculation on every render
   const formattedData = useMemo(() => {
     return data.map(item => ({

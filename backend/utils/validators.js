@@ -3,7 +3,7 @@
  */
 
 export class ValidationError extends Error {
-  constructor(message: string) {
+  constructor(message) {
     super(message);
     this.name = 'ValidationError';
   }
@@ -13,21 +13,21 @@ export const validators = {
   /**
    * Validate device ID format
    */
-  isValidDeviceId(id: string): boolean {
+  isValidDeviceId(id) {
     return /^[a-zA-Z0-9_-]+$/.test(id) && id.length > 0 && id.length < 100;
   },
 
   /**
    * Validate date range
    */
-  isValidDateRange(startDate: Date, endDate: Date): boolean {
+  isValidDateRange(startDate, endDate) {
     return startDate < endDate && startDate <= new Date();
   },
 
   /**
    * Validate boolean value
    */
-  isBoolean(value: unknown): value is boolean {
+  isBoolean(value) {
     return typeof value === 'boolean';
   },
 };
