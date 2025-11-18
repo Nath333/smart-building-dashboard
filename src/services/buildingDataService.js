@@ -1,11 +1,14 @@
 import { Config } from '../../shared/config.js';
+import { MockDataService } from './mockDataService.js';
 
 /**
  * API client for backend data service
  * Handles all communication with the backend REST API
+ * Falls back to mock data when backend is unavailable (e.g., on GitHub Pages)
  */
 export class BuildingDataService {
   static API_URL = import.meta.env.VITE_API_URL || Config.API.DEFAULT_URL;
+  static useMockData = false; // Will be set to true if backend is unavailable
 
   /**
    * Fetch data from API with error handling and type conversion
@@ -86,7 +89,20 @@ export class BuildingDataService {
   }
 
   static async fetchBuildingData() {
-    return this.fetchAPI('/building/data');
+    // If we've already determined to use mock data, use it directly
+    if (this.useMockData) {
+      console.info('Using mock data (backend unavailable)');
+      return MockDataService.generateMockData();
+    }
+
+    try {
+      return await this.fetchAPI('/building/data');
+    } catch (error) {
+      // If API fails, switch to mock data mode
+      console.warn('Backend unavailable, switching to mock data mode:', error.message);
+      this.useMockData = true;
+      return MockDataService.generateMockData();
+    }
   }
 
   static async updateDeviceStatus(deviceId, status) {
