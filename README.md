@@ -287,6 +287,75 @@ export class MockDataService {
 - [ ] Dark mode toggle
 - [ ] Customizable dashboard layouts
 
+## For Developers & Contributors
+
+### Branch Structure
+
+- **`main`** - Production branch (protected)
+  - Deploys to GitHub Pages automatically
+  - Merge via Pull Requests only
+- **`claude/*`** - Feature branches
+  - Automatically deploy to GitHub Pages for testing
+  - Create PR to merge to main
+
+### Merging to Main
+
+Since `main` is protected, use Pull Requests:
+
+1. **Create PR on GitHub**:
+   - Repository → Pull Requests → New Pull Request
+   - Base: `main` ← Compare: `claude/*` branch
+   - Create and merge
+
+2. **After merge**:
+   - GitHub Actions deploys automatically
+   - Live site updates at `https://Nath333.github.io/smart-building-dashboard/`
+
+### Deployment Workflow
+
+```
+Push Code → GitHub Actions → Build → Deploy → Live on GitHub Pages
+```
+
+The workflow:
+1. Triggers on push to `main` or `claude/*` branches
+2. Runs `npm ci` and `npm run build`
+3. Deploys `dist/` folder to GitHub Pages
+4. Site goes live within 1-2 minutes
+
+### Checking Deployment Status
+
+- **GitHub Actions tab** → "Deploy to GitHub Pages" workflow
+- **Green checkmark** = successful deployment
+- **Red X** = failed (check logs for errors)
+
+### Local Testing
+
+```bash
+# Install dependencies
+npm install
+
+# Development (frontend only, auto-uses mock data)
+npm run dev
+
+# Development (full-stack with backend)
+npm run dev:fullstack
+
+# Build production bundle
+npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+### Project Status
+
+✅ JavaScript conversion complete
+✅ Mock data fallback implemented
+✅ GitHub Actions workflow configured
+✅ Documentation consolidated
+✅ Ready for production deployment
+
 ## License
 
 MIT
