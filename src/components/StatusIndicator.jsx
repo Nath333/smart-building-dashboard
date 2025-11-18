@@ -1,11 +1,6 @@
 import { Wifi, WifiOff } from 'lucide-react';
-import type { BuildingStatus } from '../types';
 
-interface StatusIndicatorProps {
-  status: BuildingStatus;
-}
-
-export function StatusIndicator({ status }: StatusIndicatorProps) {
+export function StatusIndicator({ status }) {
   const lastUpdatedStr = new Date(status.lastUpdated).toLocaleTimeString('fr-FR');
 
   return (

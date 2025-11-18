@@ -1,68 +1,68 @@
-import { Router, Request, Response } from 'express';
-import { BuildingDataService } from '../services/buildingDataService';
-import { logger } from '../utils/logger';
-import { validators, ValidationError } from '../utils/validators';
+import { Router } from 'express';
+import { BuildingDataService } from '../services/buildingDataService.js';
+import { logger } from '../utils/logger.js';
+import { validators, ValidationError } from '../utils/validators.js';
 
 const router = Router();
 
 /**
  * Error handler wrapper for async routes
  */
-const asyncHandler = (fn: Function) => (req: Request, res: Response, next: any) => {
+const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 // Get complete building data
-router.get('/data', asyncHandler(async (req: Request, res: Response) => {
+router.get('/data', asyncHandler(async (req, res) => {
   logger.info('GET /api/building/data');
   const data = await BuildingDataService.getBuildingData();
   res.json({ success: true, data });
 }));
 
 // Get building status
-router.get('/status', asyncHandler(async (req: Request, res: Response) => {
+router.get('/status', asyncHandler(async (req, res) => {
   logger.info('GET /api/building/status');
   const status = await BuildingDataService.getBuildingStatus();
   res.json({ success: true, data: status });
 }));
 
 // Get energy data
-router.get('/energy/current', asyncHandler(async (req: Request, res: Response) => {
+router.get('/energy/current', asyncHandler(async (req, res) => {
   logger.info('GET /api/building/energy/current');
   const energy = await BuildingDataService.getCurrentEnergy();
   res.json({ success: true, data: energy });
 }));
 
 // Get historical energy data
-router.get('/energy/history', asyncHandler(async (req: Request, res: Response) => {
+router.get('/energy/history', asyncHandler(async (req, res) => {
   logger.info('GET /api/building/energy/history');
   const history = await BuildingDataService.getEnergyHistory();
   res.json({ success: true, data: history });
 }));
 
 // Get temperature data
-router.get('/temperature/week', asyncHandler(async (req: Request, res: Response) => {
+router.get('/temperature/week', asyncHandler(async (req, res) => {
   logger.info('GET /api/building/temperature/week');
   const temperature = await BuildingDataService.getTemperatureWeek();
   res.json({ success: true, data: temperature });
 }));
 
 // Get environmental data
-router.get('/environmental/current', asyncHandler(async (req: Request, res: Response) => {
+router.get('/environmental/current', asyncHandler(async (req, res) => {
   logger.info('GET /api/building/environmental/current');
   const environmental = await BuildingDataService.getEnvironmentalData();
   res.json({ success: true, data: environmental });
 }));
 
 // Get devices status
-router.get('/devices', asyncHandler(async (req: Request, res: Response) => {
+router.get('/devices', asyncHandler(async (req, res) => {
   logger.info('GET /api/building/devices');
   const devices = await BuildingDataService.getDevices();
   res.json({ success: true, data: devices });
 }));
 
 // Update device status
-router.patch('/devices/:id', asyncHandler(async (req: Request, res: Response) => {
+router.patch('/devices/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { isConnected } = req.body;
 

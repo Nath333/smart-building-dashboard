@@ -1,17 +1,19 @@
-import type { BuildingData, EnergyData, ApiResponse } from '../types';
-import { Config } from '../../shared/config';
+import { Config } from '../../shared/config.js';
+import { MockDataService } from './mockDataService.js';
 
 /**
  * API client for backend data service
  * Handles all communication with the backend REST API
+ * Falls back to mock data when backend is unavailable (e.g., on GitHub Pages)
  */
 export class BuildingDataService {
-  private static readonly API_URL = import.meta.env.VITE_API_URL || Config.API.DEFAULT_URL;
+  static API_URL = import.meta.env.VITE_API_URL || Config.API.DEFAULT_URL;
+  static useMockData = false; // Will be set to true if backend is unavailable
 
   /**
    * Fetch data from API with error handling and type conversion
    */
-  private static async fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  static async fetchAPI(endpoint, options) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), Config.API.TIMEOUT);
 
@@ -33,14 +35,14 @@ export class BuildingDataService {
         );
       }
 
-      const result: ApiResponse<T> = await response.json();
+      const result = await response.json();
 
       if (!result.success) {
         throw new Error(result.error || 'API request failed');
       }
 
       // Convert date strings to Date objects
-      return this.convertDates(result.data as T);
+      return this.convertDates(result.data);
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -55,7 +57,7 @@ export class BuildingDataService {
     }
   }
 
-  private static convertDates(obj: any): any {
+  static convertDates(obj) {
     if (obj === null || obj === undefined) return obj;
 
     if (typeof obj === 'string') {
@@ -72,7 +74,7 @@ export class BuildingDataService {
     }
 
     if (typeof obj === 'object') {
-      const converted: any = {};
+      const converted = {};
       for (const key in obj) {
         if (key === 'lastUpdated' || key === 'lastSeen') {
           converted[key] = new Date(obj[key]);
@@ -86,23 +88,36 @@ export class BuildingDataService {
     return obj;
   }
 
-  static async fetchBuildingData(): Promise<BuildingData> {
-    return this.fetchAPI<BuildingData>('/building/data');
+  static async fetchBuildingData() {
+    // If we've already determined to use mock data, use it directly
+    if (this.useMockData) {
+      console.info('Using mock data (backend unavailable)');
+      return MockDataService.generateMockData();
+    }
+
+    try {
+      return await this.fetchAPI('/building/data');
+    } catch (error) {
+      // If API fails, switch to mock data mode
+      console.warn('Backend unavailable, switching to mock data mode:', error.message);
+      this.useMockData = true;
+      return MockDataService.generateMockData();
+    }
   }
 
-  static async updateDeviceStatus(deviceId: string, status: boolean): Promise<void> {
+  static async updateDeviceStatus(deviceId, status) {
     await this.fetchAPI(`/building/devices/${deviceId}`, {
       method: 'PATCH',
       body: JSON.stringify({ isConnected: status }),
     });
   }
 
-  static async getHistoricalData(startDate: Date, endDate: Date): Promise<EnergyData[]> {
+  static async getHistoricalData(startDate, endDate) {
     // Include date range as query parameters
     const params = new URLSearchParams({
       start: startDate.toISOString(),
       end: endDate.toISOString(),
     });
-    return this.fetchAPI<EnergyData[]>(`/building/energy/history?${params}`);
+    return this.fetchAPI(`/building/energy/history?${params}`);
   }
 }

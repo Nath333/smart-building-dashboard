@@ -1,17 +1,19 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Zap } from 'lucide-react';
-import type { EnergyData } from '../types';
+import { useMemo, memo } from 'react';
 
-interface EnergyChartProps {
-  data: EnergyData[];
-  realTime: number;
-}
+function EnergyChartComponent({ data, realTime }) {
+  // Memoize formatted data to avoid recalculation on every render
+  const formattedData = useMemo(() => {
+    return data.map(item => ({
+      time: new Date(item.timestamp).getHours() + ':00',
+      consumption: Math.round(item.consumption),
+    }));
+  }, [data]);
 
-export function EnergyChart({ data, realTime }: EnergyChartProps) {
-  const formattedData = data.map(item => ({
-    time: new Date(item.timestamp).getHours() + ':00',
-    consumption: Math.round(item.consumption),
-  }));
+  const formattedRealTime = useMemo(() => {
+    return Math.round(realTime).toLocaleString('fr-FR');
+  }, [realTime]);
 
   return (
     <div className="chart-card">
@@ -22,7 +24,7 @@ export function EnergyChart({ data, realTime }: EnergyChartProps) {
         </div>
         <div className="realtime-display">
           <span className="realtime-label">Actuel</span>
-          <span className="realtime-value">{Math.round(realTime).toLocaleString('fr-FR')} W</span>
+          <span className="realtime-value">{formattedRealTime} W</span>
         </div>
       </div>
 
@@ -60,3 +62,6 @@ export function EnergyChart({ data, realTime }: EnergyChartProps) {
     </div>
   );
 }
+
+// Export memoized version for performance
+export const EnergyChart = memo(EnergyChartComponent);

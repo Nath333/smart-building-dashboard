@@ -1,8 +1,8 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import cors from 'cors';
-import buildingRouter from './routes/building';
-import { logger } from './utils/logger';
-import { ValidationError } from './utils/validators';
+import buildingRouter from './routes/building.js';
+import { logger } from './utils/logger.js';
+import { ValidationError } from './utils/validators.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Request logging middleware
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req, res, next) => {
   logger.debug(`${req.method} ${req.path}`);
   next();
 });
@@ -21,12 +21,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use('/api/building', buildingRouter);
 
 // Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err, req, res, next) => {
   logger.error('Error occurred:', err);
 
   // Handle validation errors

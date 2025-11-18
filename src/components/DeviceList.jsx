@@ -1,11 +1,6 @@
 import { CheckCircle, XCircle } from 'lucide-react';
-import type { DeviceStatus } from '../types';
 
-interface DeviceListProps {
-  devices: DeviceStatus[];
-}
-
-export function DeviceList({ devices }: DeviceListProps) {
+export function DeviceList({ devices }) {
   return (
     <div className="device-list-card">
       <h3>Appareils Connectés</h3>
